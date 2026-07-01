@@ -12,7 +12,7 @@ The harness SHALL create and maintain a `docs/master-prd.md` file that captures 
 - **THEN** the document SHALL include project goals, target users or actors, scope boundaries, non-goals, priorities, dependencies or constraints, and success measures
 
 ### Requirement: The harness SHALL split each feature into small, purpose-specific PRD files
-The harness SHALL create a dedicated feature directory under `docs/features/feat-xx/` and SHALL split feature documentation into predictable small files with clear responsibilities.
+The harness SHALL create a dedicated feature directory under `docs/features/feat-<slug>/` and SHALL split feature documentation into predictable small files with clear responsibilities.
 
 #### Scenario: Feature directory is scaffolded with canonical files
 - **WHEN** the harness decomposes approved project scope into a new feature

@@ -124,14 +124,20 @@ Recommended `.vibe/` layout:
     current.yaml
   reviews/
     master-prd.yaml
-    feat-xx.yaml
+    feat-<slug>.yaml
   changes/
-    change-001-adjust-scope/
+    change-<sequence>-<slug>/
       request.md
       impact.md
       decision.md
   logs/
 ```
+
+Review storage rules:
+
+- `docs/features/feat-<slug>/review.yaml` SHALL remain the canonical review record for an individual feature
+- `.vibe/reviews/` SHALL act as a workflow-facing review index or cache for fast lookup across project stages
+- if the index and the feature-local review file disagree, the harness SHALL reconcile from the feature-local `review.yaml` and refresh the `.vibe/reviews/` entry
 
 Rationale:
 
@@ -148,7 +154,7 @@ Each feature directory will use this structure:
 docs/
   master-prd.md
   features/
-    feat-xx/
+    feat-<slug>/
       index.md
       01-foundation.md
       02-product.md
@@ -292,7 +298,7 @@ Recommended runtime structure:
   sessions/
   reviews/
   changes/
-    change-xx/
+    change-<sequence>-<slug>/
       request.md
       impact.md
       decision.md

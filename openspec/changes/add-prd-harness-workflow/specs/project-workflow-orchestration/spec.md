@@ -19,6 +19,10 @@ The harness SHALL represent the end-to-end project lifecycle as explicit workflo
 - **WHEN** a user reopens a workspace with an existing tracker after a prior session ended during an active workflow stage
 - **THEN** the harness SHALL restore the current workflow state from the tracker before offering next-step actions
 
+#### Scenario: Workspace config is validated before workflow execution
+- **WHEN** the harness starts a workflow in a workspace containing `.vibe/config.yaml`
+- **THEN** it SHALL validate the workspace configuration before executing workflow actions and SHALL block or warn on invalid required settings according to the config error severity
+
 ### Requirement: The harness SHALL restrict workflow actions by lifecycle state
 The harness SHALL determine which tools, prompts, and next steps are valid based on the current workflow state so users and agents cannot skip required review and confirmation gates.
 

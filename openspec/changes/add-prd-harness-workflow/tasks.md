@@ -35,7 +35,6 @@
 - [ ] 5.2 Define the mapping from reviewed `05-plan.md` tasks into OpenSpec implementation artifacts, including affected areas and task derivation rules
 - [ ] 5.3 Add adapters and workflow steps that create or synchronize OpenSpec implementation artifacts for `implementation_ready` features
 - [ ] 5.4 Implement sync triggers and reconciliation behavior between OpenSpec task updates and `.vibe/tracker.yaml`
-- [ ] 5.3 Implement change-request handling that records request, impact, and decision files and syncs replanning status across tracker and OpenSpec context
 - [ ] 5.5 Implement change-request handling that records request, impact, and decision files and syncs replanning status across tracker and OpenSpec context
 
 ## 6. Verify the workflow contract

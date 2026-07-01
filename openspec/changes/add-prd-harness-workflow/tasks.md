@@ -9,6 +9,7 @@
 - [ ] 2.1 Define runtime schemas for `.vibe/tracker.yaml`, feature manifests, `review.yaml`, and session state
 - [ ] 2.2 Implement store modules for reading and writing tracker, review, session, and change-request records
 - [ ] 2.3 Implement workflow-state transition guards, including review blocking and `replan_required` handling
+- [ ] 2.4 Define and validate role-based model configuration for `drafting` and `review`, including workspace and user-level overrides
 
 ## 3. Add PRD document templates and generation flow
 
@@ -20,7 +21,8 @@
 
 - [ ] 4.1 Define global PRD quality checks and document-specific review checks as separate rule assets
 - [ ] 4.2 Implement master-PRD and feature-PRD review workflows that persist structured results to `review.yaml`
-- [ ] 4.3 Implement plan-generation workflows that are allowed only after the corresponding review records are approved
+- [ ] 4.3 Implement model selection logic so PRD drafting and PRD review can use different configured models with safe fallback behavior
+- [ ] 4.4 Implement plan-generation workflows that are allowed only after the corresponding review records are approved
 
 ## 5. Integrate implementation handoff and progress tracking
 
@@ -32,4 +34,5 @@
 
 - [ ] 6.1 Add tests for tracker persistence, workflow transitions, and review-gate blocking behavior
 - [ ] 6.2 Add tests for feature directory scaffolding and template applicability handling
-- [ ] 6.3 Add tests for progress synchronization and change-request-driven replanning flows
+- [ ] 6.3 Add tests for role-based model resolution, override precedence, and fallback behavior
+- [ ] 6.4 Add tests for progress synchronization and change-request-driven replanning flows

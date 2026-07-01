@@ -20,6 +20,7 @@ The harness needs to support re-entry when users add or change requirements mids
 - Define a durable filesystem layout for runtime state, PRD artifacts, and implementation specs.
 - Define required and optional PRD document types for master and feature-level documentation.
 - Define review-gate behavior, including global PRD checks and document-specific checks.
+- Define separate model roles for PRD authoring and PRD review, plus a user-overridable configuration hierarchy.
 - Define tracker, review, and session responsibilities so progress can be resumed safely across long-running work.
 - Define the boundary between harness-owned orchestration and OpenSpec-owned implementation artifacts.
 - Keep the future implementation modular using a `micode`-style separation of agents, hooks, tools, schemas, templates, adapters, and workflow modules.
@@ -165,7 +166,49 @@ Rationale:
 
 Alternative considered: leave review as agent-only natural language. Rejected because state transitions and resumability become unreliable.
 
-### 6. Change requests become first-class workflow events
+### 6. PRD drafting and PRD review use separate logical model roles
+
+The harness SHALL treat PRD authoring and PRD review as separate logical roles with independent model selection.
+
+Minimum logical roles:
+
+- `drafting`: used for master PRD drafting, feature PRD drafting, and revision proposals
+- `review`: used for master PRD review, feature PRD review, and plan review
+
+Recommended behavior:
+
+- the drafting role should optimize for synthesis and structured authoring
+- the review role should optimize for critique, consistency checks, and structured pass/fail output
+- the harness may allow both roles to point to the same underlying model, but it SHALL keep the role boundary explicit
+
+Configuration hierarchy:
+
+1. OpenCode default model provides the final fallback
+2. user-level plugin config provides personal defaults
+3. workspace `.vibe/config.yaml` provides project-local overrides
+4. future workflow-step overrides may provide the highest-precedence explicit override
+
+Recommended config shape:
+
+```yaml
+models:
+  drafting:
+    model: provider/model
+  review:
+    model: provider/model
+```
+
+Optional user-level config can mirror the same shape in a plugin-specific config file such as `~/.config/opencode/oc-plugin-prd.jsonc`.
+
+Rationale:
+
+- authoring and review have materially different objectives and benefit from different model behavior
+- teams need to tune cost, speed, and strictness without editing workflow code
+- explicit model-role separation keeps future maker-checker or fallback strategies compatible with the same workflow contract
+
+Alternative considered: use one global model for every workflow step. Rejected because it hides a critical quality-control knob and makes review behavior harder to tune.
+
+### 7. Change requests become first-class workflow events
 
 When users add or modify requirements after draft or implementation stages, the harness will create a change-request record and map impacted features before resuming planning or implementation.
 
@@ -195,7 +238,7 @@ Rationale:
 
 - ad hoc edits to old documents lose causal history and create silent drift
 
-### 7. Plugin implementation should mirror `micode`'s separation of concerns, not its product workflow
+### 8. Plugin implementation should mirror `micode`'s separation of concerns, not its product workflow
 
 Recommended source layout:
 
@@ -223,6 +266,7 @@ Responsibilities:
 - `hooks/`: session loading, tracker sync, state-aware prompt injection, review gate enforcement
 - `store/`: typed read/write access for tracker, review, session, manifest files
 - `schemas/`: runtime validation for tracker and review data
+- `schemas/`: runtime validation for tracker, review, and role-based model configuration
 - `prompts/`: stage-specific prompt assets
 - `templates/`: master and feature PRD templates
 - `adapters/`: LLM, OpenSpec, Git, filesystem integration boundaries
@@ -237,6 +281,7 @@ Rationale:
 - [Workflow rigidity] -> A strict state machine may feel heavy for tiny projects. Mitigation: allow a reduced path for simple projects while preserving the same tracker model.
 - [Document overhead] -> Multiple small files per feature increase artifact count. Mitigation: use `index.md`, manifests, and template generation to keep navigation predictable.
 - [Review latency] -> Repeated review loops can slow momentum. Mitigation: use structured rule checks first and reserve multi-model review for higher-risk gates.
+- [Model misconfiguration] -> User-provided model settings may reference unavailable or weak models. Mitigation: validate configured roles, surface warnings, and fall back to the OpenCode default model when allowed.
 - [Tracker drift] -> Runtime state can drift from docs or OpenSpec tasks. Mitigation: centralize writes through store modules and add sync hooks after relevant operations.
 - [OpenSpec boundary confusion] -> Teams may duplicate status across systems. Mitigation: define `.vibe/tracker.yaml` as total workflow truth and `openspec/` as implementation change truth.
 
@@ -275,11 +320,13 @@ src/
     tracker.ts
     review.ts
     session.ts
+    config.ts
   schemas/
     tracker.ts
     review.ts
     manifest.ts
     prd-check.ts
+    model-config.ts
   prompts/
     discovery.md
     master-prd.md
@@ -298,6 +345,7 @@ src/
       05-plan.md
   adapters/
     llm.ts
+    model-selector.ts
     openspec.ts
     git.ts
     filesystem.ts

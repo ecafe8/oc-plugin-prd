@@ -7,12 +7,20 @@ The harness SHALL create and maintain a `docs/master-prd.md` file that captures 
 - **WHEN** the harness drafts or revises the master PRD
 - **THEN** the document SHALL describe the project constitution and SHALL NOT contain feature-specific technical implementation detail
 
+#### Scenario: Master PRD includes required project fields
+- **WHEN** the harness creates or updates `docs/master-prd.md`
+- **THEN** the document SHALL include project goals, target users or actors, scope boundaries, non-goals, priorities, dependencies or constraints, and success measures
+
 ### Requirement: The harness SHALL split each feature into small, purpose-specific PRD files
 The harness SHALL create a dedicated feature directory under `docs/features/feat-xx/` and SHALL split feature documentation into predictable small files with clear responsibilities.
 
 #### Scenario: Feature directory is scaffolded with canonical files
 - **WHEN** the harness decomposes approved project scope into a new feature
 - **THEN** it SHALL create `index.md`, `01-foundation.md`, `02-product.md`, `03-ui-ux.md`, `04-technical.md`, `05-plan.md`, and `review.yaml` in the feature directory
+
+#### Scenario: Feature directories use deterministic names
+- **WHEN** the harness creates a feature directory
+- **THEN** it SHALL use `feat-<slug>` naming with a lowercase kebab-case slug and SHALL append a deterministic numeric suffix when the base slug collides with an existing feature
 
 #### Scenario: Optional dimensions remain explicit
 - **WHEN** a feature has no UI surface or another dimension is not applicable
@@ -21,6 +29,10 @@ The harness SHALL create a dedicated feature directory under `docs/features/feat
 ### Requirement: Each feature PRD file SHALL have a distinct semantic role
 The harness SHALL enforce non-overlapping responsibilities for feature PRD files so downstream planning and coding agents can consume only the relevant context.
 
+#### Scenario: Index document summarizes the feature package
+- **WHEN** the harness writes `index.md`
+- **THEN** the document SHALL include the feature identifier, title, current status, linked document inventory, and major dependencies or blockers
+
 #### Scenario: Foundation document defines boundaries
 - **WHEN** the harness writes `01-foundation.md`
 - **THEN** the document SHALL define terms, actors, permissions, scope boundaries, assumptions, dependencies, and non-goals
@@ -28,6 +40,10 @@ The harness SHALL enforce non-overlapping responsibilities for feature PRD files
 #### Scenario: Product document defines behavior
 - **WHEN** the harness writes `02-product.md`
 - **THEN** the document SHALL define business rules, state transitions, normal flow, exception flow, and Given-When-Then acceptance criteria
+
+#### Scenario: UI document defines interaction states
+- **WHEN** the harness writes `03-ui-ux.md`
+- **THEN** the document SHALL define component boundaries, user feedback expectations, and loading, empty, error, and success states for the feature surface
 
 #### Scenario: Technical document defines implementation contracts
 - **WHEN** the harness writes `04-technical.md`

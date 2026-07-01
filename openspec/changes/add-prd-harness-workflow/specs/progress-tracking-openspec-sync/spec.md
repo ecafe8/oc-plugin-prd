@@ -22,6 +22,10 @@ The harness SHALL translate approved feature planning artifacts into OpenSpec ch
 - **WHEN** OpenSpec tasks advance or complete
 - **THEN** the harness SHALL synchronize progress back into `.vibe/tracker.yaml` without delegating overall workflow-state ownership to OpenSpec
 
+#### Scenario: Synchronization runs after implementation-phase updates
+- **WHEN** the harness completes an implementation-phase action or observes an OpenSpec task-state change through an explicit sync step or hook
+- **THEN** it SHALL refresh the related feature and task progress in `.vibe/tracker.yaml`
+
 ### Requirement: The harness SHALL synchronize change-request impact across tracker and implementation artifacts
 The harness SHALL reconcile midstream requirement changes against both aggregate tracking records and any existing implementation-phase artifacts.
 
@@ -32,3 +36,7 @@ The harness SHALL reconcile midstream requirement changes against both aggregate
 #### Scenario: Progress snapshot reflects blockers and replanning
 - **WHEN** the user asks for overall project status after a change request or failed review
 - **THEN** the harness SHALL include blocked and replan-required items in its aggregated progress output
+
+#### Scenario: Tracker remains authoritative during conflicts
+- **WHEN** harness-managed workflow state and OpenSpec artifact state disagree
+- **THEN** the harness SHALL treat `.vibe/tracker.yaml` as the authoritative source for overall workflow status and SHALL surface the inconsistency for reconciliation

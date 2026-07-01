@@ -11,6 +11,10 @@ The harness SHALL evaluate master PRDs, feature PRDs, and implementation plans a
 - **WHEN** one or more blocking checks fail during review
 - **THEN** the harness SHALL return a non-approved review decision and SHALL keep the workflow in the current review stage
 
+#### Scenario: Revised artifacts re-enter review
+- **WHEN** a blocked PRD artifact is revised after a review failure
+- **THEN** the harness SHALL require the artifact to pass a new review run before the workflow can advance
+
 ### Requirement: The harness SHALL apply document-specific review checks by PRD type
 The harness SHALL supplement global checks with document-specific checks appropriate to the semantic role of each PRD file.
 
@@ -54,6 +58,17 @@ The harness SHALL write review results to structured files so workflow transitio
 #### Scenario: Review status governs planning eligibility
 - **WHEN** `review.yaml` records `approved`
 - **THEN** the harness SHALL allow plan generation for the reviewed scope
+
+### Requirement: The harness SHALL generate structured implementation plans after review approval
+The harness SHALL generate `05-plan.md` as a structured implementation plan that is specific enough to support downstream OpenSpec handoff and coding workflows.
+
+#### Scenario: Plan structure is implementation-ready
+- **WHEN** the harness writes `05-plan.md`
+- **THEN** the document SHALL define ordered tasks, task dependencies where relevant, target files or affected areas, and verification expectations at a granularity suitable for implementation execution
+
+#### Scenario: Plan preserves OpenSpec handoff context
+- **WHEN** the harness prepares a reviewed feature for implementation
+- **THEN** `05-plan.md` SHALL contain enough structured task detail for the harness to derive or update related OpenSpec implementation artifacts
 
 ### Requirement: The harness SHALL separate authoring templates from review rules
 The harness SHALL maintain PRD templates and review rules as distinct assets so document structure can evolve independently from quality enforcement.

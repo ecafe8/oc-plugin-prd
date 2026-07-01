@@ -52,6 +52,34 @@ Initial state set:
 - `replan_required`
 - `completed`
 
+Allowed transition rules:
+
+| From | To | Condition |
+| --- | --- | --- |
+| `project_discovery` | `master_prd_drafting` | discovery context is sufficient to draft the project constitution |
+| `master_prd_drafting` | `master_prd_review` | draft created or revised |
+| `master_prd_review` | `master_prd_drafting` | review requests changes |
+| `master_prd_review` | `feature_splitting` | review approved |
+| `feature_splitting` | `feature_review` | one or more feature PRD sets generated |
+| `feature_review` | `feature_splitting` | split is incomplete or feature documents need structural changes |
+| `feature_review` | `awaiting_user_confirmation` | reviewed feature set is approved for confirmation |
+| `awaiting_user_confirmation` | `implementation_ready` | user confirms development should begin |
+| `implementation_ready` | `implementation_in_progress` | OpenSpec handoff completed and execution starts |
+| `implementation_in_progress` | `completed` | all tracked features and implementation tasks are done |
+| `master_prd_drafting` | `change_request_received` | user introduces a requirement change that supersedes current draft assumptions |
+| `master_prd_review` | `change_request_received` | user introduces a requirement change during review |
+| `feature_splitting` | `change_request_received` | user introduces a new or changed requirement during splitting |
+| `feature_review` | `change_request_received` | user introduces a new or changed requirement during review |
+| `awaiting_user_confirmation` | `change_request_received` | user changes scope before implementation approval |
+| `implementation_ready` | `change_request_received` | user changes scope before execution starts |
+| `implementation_in_progress` | `change_request_received` | user changes scope during active implementation |
+| `change_request_received` | `replan_required` | impact analysis identifies affected project or feature artifacts |
+| `replan_required` | `master_prd_drafting` | change invalidates project-level goals, scope, priorities, or master assumptions |
+| `replan_required` | `feature_splitting` | change adds or removes features without invalidating master PRD intent |
+| `replan_required` | `feature_review` | change only requires revising already-split feature documents |
+
+The harness SHOULD reject direct transitions that bypass required review or confirmation states.
+
 Rationale:
 
 - users can enter new requirements after implementation has started
@@ -60,13 +88,50 @@ Rationale:
 
 Alternative considered: infer workflow state solely from documents and directories. Rejected because review outcomes, approvals, and replanning triggers are not reliably recoverable from static files alone.
 
-### 2. The harness owns overall workflow truth; OpenSpec owns implementation-change truth
+### 2. Session recovery combines tracker-first restoration with filesystem reconciliation
+
+The harness SHALL restore workflow state primarily from `.vibe/tracker.yaml` and SHALL use filesystem reconciliation as a secondary integrity check.
+
+Recovery rules:
+
+- if tracker state exists and referenced artifacts exist, resume from tracker state
+- if tracker state exists but required artifacts are missing, mark the session blocked and surface a repair action
+- if tracker state is missing but workflow artifacts exist, infer the highest safe resumable stage and ask the user to confirm adoption
+- if both tracker state and artifacts are missing, start at `project_discovery`
+
+Rationale:
+
+- tracker data is the only reliable place for review results, approvals, and partially completed transitions
+- artifact existence still matters for recovery after manual file edits or partial corruption
+
+Alternative considered: recover entirely from tracker data without reconciling files. Rejected because it hides missing or manually edited artifacts until a later failure.
+
+### 3. The harness owns overall workflow truth; OpenSpec owns implementation-change truth
 
 The system will maintain three distinct truth layers:
 
 - `docs/`: product and delivery intent
 - `.vibe/`: workflow runtime and aggregate progress
 - `openspec/`: implementation change artifacts
+
+Recommended `.vibe/` layout:
+
+```text
+.vibe/
+  config.yaml
+  tracker.yaml
+  sessions/
+    current.yaml
+  reviews/
+    master-prd.yaml
+    feat-xx.yaml
+  changes/
+    change-001-adjust-scope/
+      request.md
+      impact.md
+      decision.md
+  logs/
+```
 
 Rationale:
 
@@ -75,7 +140,7 @@ Rationale:
 
 Alternative considered: use OpenSpec as the only tracker. Rejected because it makes early product-discovery and cross-feature orchestration awkward and couples all workflow phases to implementation semantics.
 
-### 3. Feature PRDs use fixed semantic dimensions with controlled optionality
+### 4. Feature PRDs use fixed semantic dimensions with controlled optionality
 
 Each feature directory will use this structure:
 
@@ -103,6 +168,13 @@ Semantic rules:
 - `05-plan.md`: required before implementation starts
 - `review.yaml`: always required once review begins
 
+Feature naming rules:
+
+- feature directories SHALL use `feat-<slug>` naming
+- when ordered numbering is needed for display or stable planning, the feature metadata SHOULD include a separate `sequence` field rather than encoding numbers into the folder name
+- `<slug>` SHALL be lowercase kebab-case derived from the primary user-visible capability, for example `feat-user-auth`
+- if two features would produce the same slug, the harness SHALL append a deterministic numeric suffix such as `feat-user-auth-2`
+
 Rationale:
 
 - the four semantic dimensions discussed by the user are useful and map well to LLM context control
@@ -111,7 +183,7 @@ Rationale:
 
 Alternative considered: completely dynamic document sets per feature. Rejected because automation becomes harder and feature directories become inconsistent.
 
-### 4. Master PRD stays concise and avoids implementation detail
+### 5. Master PRD stays concise and avoids implementation detail
 
 `docs/master-prd.md` will serve as the project constitution. It defines project goals, user/problem framing, boundaries, priorities, dependencies, and success measures. It SHALL NOT contain detailed feature-by-feature technical design.
 
@@ -120,7 +192,7 @@ Rationale:
 - the master PRD should align subsequent feature decomposition without turning into a giant context dump
 - implementation details belong in feature-level technical documents and OpenSpec changes
 
-### 5. Review gates combine global checks and document-specific checks
+### 6. Review gates combine global checks and document-specific checks
 
 The harness will separate authoring templates from evaluation rules.
 
@@ -166,7 +238,7 @@ Rationale:
 
 Alternative considered: leave review as agent-only natural language. Rejected because state transitions and resumability become unreliable.
 
-### 6. PRD drafting and PRD review use separate logical model roles
+### 7. PRD drafting and PRD review use separate logical model roles
 
 The harness SHALL treat PRD authoring and PRD review as separate logical roles with independent model selection.
 
@@ -208,7 +280,7 @@ Rationale:
 
 Alternative considered: use one global model for every workflow step. Rejected because it hides a critical quality-control knob and makes review behavior harder to tune.
 
-### 7. Change requests become first-class workflow events
+### 8. Change requests become first-class workflow events
 
 When users add or modify requirements after draft or implementation stages, the harness will create a change-request record and map impacted features before resuming planning or implementation.
 
@@ -234,11 +306,19 @@ Behavior:
 - regenerate or amend PRD files and plans
 - resync implementation state if OpenSpec changes exist
 
+Change-request record rules:
+
+- change request directories SHALL use `change-<sequence>-<slug>` naming, for example `change-001-adjust-auth-scope`
+- `request.md` SHALL contain the raw user request, source context, and timestamp
+- `impact.md` SHALL identify affected workflow states, features, documents, and implementation artifacts
+- `decision.md` SHALL record the chosen path, such as reject, defer, accept, or accept-with-replan
+- the tracker SHALL store a pointer to the active change request when the workflow is in `change_request_received` or `replan_required`
+
 Rationale:
 
 - ad hoc edits to old documents lose causal history and create silent drift
 
-### 8. Plugin implementation should mirror `micode`'s separation of concerns, not its product workflow
+### 9. Plugin implementation should mirror `micode`'s separation of concerns, not its product workflow
 
 Recommended source layout:
 

@@ -24,6 +24,13 @@ export function createPendingReview(summary: string): ReviewRecord {
     summary,
     qualityGates,
     documentChecks: createDocumentCheckMap("warning"),
+    history: [],
+    loopState: {
+      retryCount: 0,
+      retryThreshold: 3,
+      escalated: false,
+      hasContradiction: false,
+    },
   };
 }
 
@@ -38,5 +45,12 @@ export function createApprovedReview(summary: string): ReviewRecord {
     summary,
     qualityGates,
     documentChecks: createDocumentCheckMap("pass"),
+    history: [],
+    loopState: {
+      retryCount: 0,
+      retryThreshold: 3,
+      escalated: false,
+      hasContradiction: false,
+    },
   };
 }

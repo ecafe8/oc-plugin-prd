@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { changeRequestRecordSchema } from "@/schemas/change-request";
+import { discoveryAuthoringMetaSchema } from "@/schemas/discovery";
 import { featureManifestSchema, taskRecordSchema } from "@/schemas/feature";
 import { workflowStateSchema } from "@/schemas/workflow";
 
@@ -19,6 +20,7 @@ export const trackerSchema = z.object({
     title: z.string().default(""),
     summary: z.string().default(""),
   }),
+  authoring: discoveryAuthoringMetaSchema,
   features: z.array(trackerFeatureSchema).default([]),
   changeRequests: z.array(changeRequestRecordSchema).default([]),
 });

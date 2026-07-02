@@ -11,6 +11,7 @@ describe("syncOpenSpecStatus", () => {
         updatedAt: new Date().toISOString(),
       },
       project: {},
+      authoring: {},
       features: [
         {
           id: "feat-auth",

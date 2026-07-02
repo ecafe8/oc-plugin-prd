@@ -9,8 +9,12 @@ export const TRACKER_PATH = `${VIBE_DIR}/tracker.yaml`;
 export const SESSION_PATH = `${VIBE_DIR}/sessions/current.yaml`;
 export const REVIEWS_DIR = `${VIBE_DIR}/reviews`;
 export const CHANGES_DIR = `${VIBE_DIR}/changes`;
+export const DISCOVERY_DIR = `${VIBE_DIR}/discovery`;
+export const DISCOVERY_CONTEXT_PATH = `${DISCOVERY_DIR}/context.yaml`;
+export const DISCOVERY_SUMMARY_PATH = `${DISCOVERY_DIR}/summary.md`;
+export const DISCOVERY_QUESTIONS_PATH = `${DISCOVERY_DIR}/questions.md`;
+export const CANDIDATES_PATH = `${VIBE_DIR}/candidates.yaml`;
 export const MASTER_PRD_PATH = `${DOCS_DIR}/master-prd.md`;
-
 export const FEATURE_FILE_NAMES = {
   index: "index.md",
   foundation: "01-foundation.md",

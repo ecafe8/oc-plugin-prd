@@ -10,6 +10,7 @@ function createDefaultTracker(): Tracker {
       updatedAt: new Date().toISOString(),
     },
     project: {},
+    authoring: {},
     features: [],
     changeRequests: [],
   });

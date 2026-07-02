@@ -20,6 +20,7 @@ describe("workflow integration", () => {
         title: "Billing Project",
         summary: "Implement billing",
       },
+      authoring: {},
       features: [
         {
           ...feature,

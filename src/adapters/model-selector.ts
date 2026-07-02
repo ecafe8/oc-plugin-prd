@@ -5,3 +5,19 @@ export function resolveModelForRole(config: VibeConfig, role: ModelRole, fallbac
   const configured = config.models[role];
   return configured?.model ?? fallbackModel;
 }
+
+export interface ResolvedModel {
+  model: string | undefined;
+  source: "configured" | "fallback" | "opencode-default";
+}
+
+export function resolveModelWithSource(config: VibeConfig, role: ModelRole, fallbackModel?: string): ResolvedModel {
+  const configured = config.models[role]?.model;
+  if (configured) {
+    return { model: configured, source: "configured" };
+  }
+  if (fallbackModel) {
+    return { model: fallbackModel, source: "fallback" };
+  }
+  return { model: undefined, source: "opencode-default" };
+}

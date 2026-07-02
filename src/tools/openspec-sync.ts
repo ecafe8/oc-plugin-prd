@@ -1,11 +1,17 @@
 import { tool } from "@opencode-ai/plugin";
 
-import { readTracker, writeTracker } from "@/store";
-import { FEATURE_STATUSES, WORKFLOW_STATES } from "@/utils/constants";
-import { markFeatureImplementationReady, syncOpenSpecStatus, writeOpenSpecHandoff } from "@/workflows";
+import { readTracker, writeTracker } from "@/store/tracker";
+import {
+  applyOpenSpecSync,
+  computeSyncResult,
+  formatSyncResult,
+  markFeatureImplementationReady,
+  syncOpenSpecStatus,
+} from "@/workflows";
 
 export const openSpecSyncTool = tool({
-  description: "Create a lightweight OpenSpec handoff and synchronize tracker state.",
+  description:
+    "Synchronize tracker task and feature state from OpenSpec implementation progress. Detects no-ops, reports conflicts, and preserves tracker authority for workflow state.",
   args: {
     featureId: tool.schema.string().min(1),
     taskDoneIds: tool.schema.array(tool.schema.string()).default([]),
@@ -17,26 +23,37 @@ export const openSpecSyncTool = tool({
       throw new Error(`Unknown feature: ${args.featureId}`);
     }
 
+    // Apply manual task-done overrides first (from agent/user input)
     feature.tasks = feature.tasks.map((task) =>
       args.taskDoneIds.includes(task.id) ? { ...task, status: "done" } : task,
     );
+
+    // Compute sync against OpenSpec artifact
+    const syncResult = await computeSyncResult(context.directory, feature);
+    let updatedTracker = tracker;
+
+    if (!syncResult.noOp) {
+      updatedTracker = applyOpenSpecSync(tracker, feature.id, syncResult.updatedTaskIds);
+    }
+
+    // Generate/update OpenSpec handoff artifact
     const readyFeature = markFeatureImplementationReady(feature);
     Object.assign(feature, readyFeature);
 
-    const handoffPath = await writeOpenSpecHandoff(context.directory, feature);
-
-    const synced = syncOpenSpecStatus(tracker, feature.id);
-    if (synced.workflow.state === WORKFLOW_STATES.completed) {
-      await writeTracker(context.directory, synced);
-    } else {
-      tracker.workflow.state = FEATURE_STATUSES.implementationReady;
-      tracker.workflow.updatedAt = new Date().toISOString();
-      await writeTracker(context.directory, tracker);
-    }
+    // Check if all tasks done → advance workflow
+    const synced = syncOpenSpecStatus(updatedTracker, feature.id);
+    await writeTracker(context.directory, synced);
 
     return {
       title: "OpenSpec synchronized",
-      output: `Wrote handoff at ${handoffPath} and synchronized tracker state for ${feature.id}.`,
+      output: formatSyncResult(syncResult, feature.id),
+      metadata: {
+        noOp: syncResult.noOp,
+        conflicts: syncResult.conflicts.length,
+        updatedTasks: syncResult.updatedTaskIds.length,
+        featureStatus: synced.features.find((f) => f.id === feature.id)?.status,
+        workflowState: synced.workflow.state,
+      },
     };
   },
 });

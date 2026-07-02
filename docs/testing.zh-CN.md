@@ -9,7 +9,7 @@
 - Bun v1.3+
 - 已安装并正常运行的 OpenCode CLI
 - `opencode` 命令已加入 PATH
-- Git（OpenSpec 工具需要）
+- `openspec` CLI（可选，但推荐用于完整 OpenSpec 集成）
 
 ---
 
@@ -30,7 +30,7 @@ opencode
 2. 创建 `/tmp/prd-test` 及所需目录结构
 3. 将 `dist/index.js` 通过 symlink 链接到 `.opencode/plugins/`
 4. 写入最小化的 `.vibe/config.yaml` 和 `opencode.json`
-5. 初始化 git 仓库（OpenSpec 工具需要）
+5. 运行 `openspec init --tools opencode` 初始化 OpenSpec 目录结构和 OpenCode skills/commands
 
 支持自定义测试目录：
 
@@ -384,7 +384,7 @@ opencode
 |------|---------|---------|
 | OpenCode 中看不到 PRD 工具 | 插件未加载 | 检查 `.opencode/plugins/index.js` symlink；重新构建插件 |
 | 配置验证错误 | `.vibe/config.yaml` 缺失或格式错误 | 重新运行 setup 脚本；检查 YAML 语法 |
-| `openspec` 命令未找到 | `openspec` CLI 不在 PATH 中 | 安装 OpenSpec：`bun install -g openspec` 或通过 `npx` 使用 |
+| `openspec` 目录缺失 | setup 脚本未找到 `openspec` CLI | 手动运行 `openspec init --tools opencode`，或安装：`bun install -g openspec` |
 | 工具报 "config validation failed" 并阻塞 | `configErrorSeverity: block` 且配置有问题 | 修复 `.vibe/config.yaml` 或将 severity 设为 `warn` |
 | `plan_generate` 意外被阻止 | Feature 已处于 `implementation_in_progress` 或 `done` 状态 | 这是预期的保护行为；应使用 `change_request_apply` 处理范围变更 |
 
@@ -403,7 +403,7 @@ rm -rf /tmp/prd-test
 与上述集成测试独立，在插件源码目录运行单元测试：
 
 ```bash
-cd /Volumes/SSD980/work/mine/current/O/oc-plugin-prd
+cd <path-to-oc-plugin-prd>
 
 bun test              # 运行所有测试
 bun run check         # lint + 类型检查 + 测试

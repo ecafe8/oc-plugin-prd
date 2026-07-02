@@ -15,7 +15,7 @@
 #   2. Creates the test directory structure
 #   3. Symlinks the built plugin into .opencode/plugins/
 #   4. Writes minimal .vibe/config.yaml and opencode.json
-#   5. Optionally initializes a git repo (needed for OpenSpec tools)
+#   5. Runs `openspec init` to set up OpenSpec directory structure and OpenCode integration
 #
 
 set -euo pipefail
@@ -28,16 +28,6 @@ TEST_DIR="${1:-/tmp/prd-test}"
 
 echo "Plugin source : $PLUGIN_ROOT"
 echo "Test workspace: $TEST_DIR"
-echo ""
-
-# ---------------------------------------------------------------------------
-# 0. Check prerequisites
-# ---------------------------------------------------------------------------
-echo "==> Checking prerequisites..."
-command -v bun     >/dev/null 2>&1 || { echo "ERROR: bun not found on PATH. Install from https://bun.sh"; exit 1; }
-command -v git     >/dev/null 2>&1 || { echo "ERROR: git not found on PATH."; exit 1; }
-command -v opencode >/dev/null 2>&1 || { echo "ERROR: opencode not found on PATH. Install the OpenCode CLI first."; exit 1; }
-command -v openspec >/dev/null 2>&1 || echo "WARNING: openspec not found on PATH (required during testing — install with: bun install -g openspec)"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -77,8 +67,7 @@ cat > "$TEST_DIR/.vibe/config.yaml" <<'EOF'
 # Minimal workspace config for oc-plugin-prd integration testing.
 #
 # models: {} falls back to the OpenCode default model for all roles.
-# configErrorSeverity: block is the default; set to "warn" if you want
-# the plugin to continue with warnings rather than errors on config issues.
+# configErrorSeverity: block ensures tools refuse to run if config is absent.
 
 models: {}
 
@@ -89,26 +78,30 @@ EOF
 echo ""
 
 # ---------------------------------------------------------------------------
-# 5. Write opencode.json (declares the plugin for this workspace)
+# 5. Write opencode.json (minimal — plugin is auto-discovered from .opencode/plugins/)
 # ---------------------------------------------------------------------------
 echo "==> Writing opencode.json"
 cat > "$TEST_DIR/opencode.json" <<'EOF'
 {
-  "$schema": "https://opencode.ai/config.json",
-  "plugins": [".opencode/plugins/index.js"]
+  "$schema": "https://opencode.ai/config.json"
 }
 EOF
 echo ""
 
 # ---------------------------------------------------------------------------
-# 6. Initialize git repo (OpenSpec CLI needs a git repo to track changes)
+# 6. Initialize OpenSpec (creates openspec/ directory structure and OpenCode skills/commands)
 # ---------------------------------------------------------------------------
-echo "==> Initializing git repo in $TEST_DIR (required for OpenSpec tools)"
+echo "==> Initializing OpenSpec..."
 cd "$TEST_DIR"
-git init --quiet
-git add -A
-git commit -m "Initial test workspace" --quiet
-echo ""
+if command -v openspec &> /dev/null; then
+  openspec init --tools opencode
+  echo ""
+else
+  echo "    WARNING: openspec CLI not found in PATH"
+  echo "    OpenSpec directory structure will be created on first use by plugin tools"
+  echo "    For full OpenSpec integration, install: bun install -g openspec"
+  echo ""
+fi
 
 # ---------------------------------------------------------------------------
 # 7. Verify symlink
@@ -124,6 +117,12 @@ fi
 
 FILE_SIZE=$(wc -c < "$TEST_DIR/.opencode/plugins/index.js")
 echo "    plugin size: ${FILE_SIZE} bytes"
+
+if [ -d "$TEST_DIR/openspec/changes" ]; then
+  echo "    openspec/changes/ OK"
+else
+  echo "    openspec/changes/ not found (will be created on first use)"
+fi
 echo ""
 
 # ---------------------------------------------------------------------------

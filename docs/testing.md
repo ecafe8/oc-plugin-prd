@@ -11,7 +11,7 @@ interfere with the plugin source repository.
 - Bun v1.3+
 - OpenCode CLI installed and working
 - `opencode` binary on PATH
-- Git (needed for OpenSpec tools)
+- `openspec` CLI (optional, recommended for full OpenSpec integration)
 
 ---
 
@@ -32,7 +32,7 @@ The setup script will:
 2. Create `/tmp/prd-test` with the correct directory structure
 3. Symlink `dist/index.js` into `.opencode/plugins/`
 4. Write minimal `.vibe/config.yaml` and `opencode.json`
-5. Initialize a git repo (needed for OpenSpec tools)
+5. Run `openspec init --tools opencode` to set up OpenSpec directory structure and OpenCode skills/commands
 
 You can pass a custom directory:
 
@@ -388,7 +388,7 @@ opencode
 |---------|-------------|-----|
 | No PRD tools visible in OpenCode | Plugin not loaded | Check `.opencode/plugins/index.js` symlink; rebuild plugin |
 | Config validation error | `.vibe/config.yaml` missing or malformed | Re-run setup script; check YAML syntax |
-| `openspec` command not found | `openspec` CLI not on PATH | Install OpenSpec: `bun install -g openspec` or use via `npx` |
+| `openspec` directory missing | Setup script couldn't find `openspec` CLI | Run `openspec init --tools opencode` manually, or install: `bun install -g openspec` |
 | Tools block with "config validation failed" | `configErrorSeverity: block` with bad config | Fix `.vibe/config.yaml` or set severity to `warn` |
 | `plan_generate` blocked unexpectedly | Feature is `implementation_in_progress` or `done` | This is expected guard behavior; use `change_request_apply` instead |
 
@@ -408,7 +408,7 @@ Separately from the integration test above, unit tests are run from the
 plugin source directory:
 
 ```bash
-cd /Volumes/SSD980/work/mine/current/O/oc-plugin-prd
+cd <path-to-oc-plugin-prd>
 
 bun test              # run all tests
 bun run check         # lint + typecheck + test

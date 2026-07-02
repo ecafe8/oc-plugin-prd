@@ -152,8 +152,11 @@ export function syncOpenSpecStatus(tracker: Tracker, featureId: string): Tracker
 
   if (feature.tasks.length > 0 && feature.tasks.every((task) => task.status === TASK_STATUSES.done)) {
     feature.status = FEATURE_STATUSES.done;
-    next.workflow.state = WORKFLOW_STATES.completed;
-    next.workflow.updatedAt = new Date().toISOString();
+
+    if (next.features.length > 0 && next.features.every((item) => item.status === FEATURE_STATUSES.done)) {
+      next.workflow.state = WORKFLOW_STATES.completed;
+      next.workflow.updatedAt = new Date().toISOString();
+    }
   }
 
   return next;

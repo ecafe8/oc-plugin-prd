@@ -3,6 +3,7 @@ import { tool } from "@opencode-ai/plugin";
 import { readReview, readTracker, writeTracker } from "@/store";
 import { FEATURE_STATUSES, WORKFLOW_STATES } from "@/utils/constants";
 import { canGeneratePlan, writeFeaturePlan } from "@/workflows";
+import { canRegeneratePlan } from "@/workflows/recovery";
 
 export const planGenerateTool = tool({
   description: "Generate a structured feature plan after review approval.",
@@ -15,6 +16,14 @@ export const planGenerateTool = tool({
     const feature = tracker.features.find((item) => item.id === args.featureId);
     if (!feature) {
       throw new Error(`Unknown feature: ${args.featureId}`);
+    }
+
+    const regenCheck = canRegeneratePlan(feature);
+    if (!regenCheck.allowed) {
+      return {
+        title: "Plan generation blocked",
+        output: regenCheck.reason ?? "Cannot regenerate plan in current state.",
+      };
     }
 
     const review = await readReview(context.directory, feature.reviewPath);

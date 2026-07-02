@@ -8,10 +8,48 @@ export interface SyncConflict {
   openSpecDone: boolean;
 }
 
+// ── Outcome classification ────────────────────────────────────────────────────
+
+/**
+ * Structured sync outcome type:
+ *   no_op        — tracker and OpenSpec already agree, no writes needed
+ *   safe_update  — OpenSpec has completed tasks tracker doesn't know about yet; safe to apply
+ *   conflict     — tracker has tasks marked done that OpenSpec still shows pending; tracker wins
+ *                  but OpenSpec needs manual reconciliation
+ *   manual_follow_up — conflicts are present alongside safe updates; operator review required
+ *                      before further sync
+ */
+export type SyncOutcomeKind = "no_op" | "safe_update" | "conflict" | "manual_follow_up";
+
 export interface SyncResult {
   noOp: boolean;
   conflicts: SyncConflict[];
   updatedTaskIds: string[];
+  outcomeKind: SyncOutcomeKind;
+  repairGuidance: string[];
+}
+
+// ── Outcome helpers ───────────────────────────────────────────────────────────
+
+function classifyOutcome(noOp: boolean, conflicts: SyncConflict[], updatedTaskIds: string[]): SyncOutcomeKind {
+  if (noOp) return "no_op";
+  if (conflicts.length > 0 && updatedTaskIds.length > 0) return "manual_follow_up";
+  if (conflicts.length > 0) return "conflict";
+  return "safe_update";
+}
+
+function buildRepairGuidance(conflicts: SyncConflict[], featureId: string): string[] {
+  if (conflicts.length === 0) return [];
+
+  const guidance: string[] = [
+    `${conflicts.length} task(s) are marked done in the tracker but still pending in the OpenSpec artifact.`,
+    `The tracker remains authoritative — no tracker state was changed.`,
+    `To reconcile, open openspec/changes/${featureId}.md and mark the following task(s) as done:`,
+    ...conflicts.map((c) => `  - [ ] → [x]  ${c.taskId}`),
+    `Then rerun openspec_sync to confirm alignment.`,
+  ];
+
+  return guidance;
 }
 
 // ── Generate / update OpenSpec change ────────────────────────────────────────
@@ -33,7 +71,7 @@ export async function computeSyncResult(root: string, feature: TrackerFeature): 
   const openSpecStatuses = await readOpenSpecTaskStatus(root, feature.id);
 
   if (openSpecStatuses.size === 0) {
-    return { noOp: true, conflicts: [], updatedTaskIds: [] };
+    return { noOp: true, conflicts: [], updatedTaskIds: [], outcomeKind: "no_op", repairGuidance: [] };
   }
 
   const conflicts: SyncConflict[] = [];
@@ -47,7 +85,7 @@ export async function computeSyncResult(root: string, feature: TrackerFeature): 
 
     if (openSpecDone !== trackerDone) {
       if (openSpecDone) {
-        // OpenSpec says done but tracker disagrees → update tracker
+        // OpenSpec says done but tracker disagrees → safe to update tracker
         updatedTaskIds.push(task.id);
       } else {
         // Tracker says done but OpenSpec says not → conflict (tracker wins)
@@ -57,7 +95,10 @@ export async function computeSyncResult(root: string, feature: TrackerFeature): 
   }
 
   const noOp = updatedTaskIds.length === 0 && conflicts.length === 0;
-  return { noOp, conflicts, updatedTaskIds };
+  const outcomeKind = classifyOutcome(noOp, conflicts, updatedTaskIds);
+  const repairGuidance = buildRepairGuidance(conflicts, feature.id);
+
+  return { noOp, conflicts, updatedTaskIds, outcomeKind, repairGuidance };
 }
 
 export function applyOpenSpecSync(tracker: Tracker, featureId: string, updatedTaskIds: string[]): Tracker {
@@ -84,16 +125,24 @@ export function formatSyncResult(result: SyncResult, featureId: string): string 
     return `Sync: no changes required for ${featureId} — tracker and OpenSpec already agree.`;
   }
 
-  const lines: string[] = [`Sync result for ${featureId}:`];
+  const lines: string[] = [`Sync result for ${featureId} [${result.outcomeKind}]:`];
 
   if (result.updatedTaskIds.length > 0) {
-    lines.push(`  Updated to done: ${result.updatedTaskIds.join(", ")}`);
+    lines.push(`  Safe update — applied ${result.updatedTaskIds.length} task(s) from OpenSpec to tracker:`);
+    lines.push(`  ${result.updatedTaskIds.join(", ")}`);
   }
 
   if (result.conflicts.length > 0) {
-    lines.push(`  Conflicts (tracker wins):`);
+    lines.push(`  Conflicts (tracker authoritative — ${result.conflicts.length} task(s) need manual OpenSpec update):`);
     for (const conflict of result.conflicts) {
-      lines.push(`    ${conflict.taskId}: tracker=${conflict.trackerStatus}, openspec=done — tracker is authoritative`);
+      lines.push(`    ${conflict.taskId}: tracker=${conflict.trackerStatus}, openspec=pending`);
+    }
+  }
+
+  if (result.repairGuidance.length > 0) {
+    lines.push("", "  Repair guidance:");
+    for (const line of result.repairGuidance) {
+      lines.push(`  ${line}`);
     }
   }
 

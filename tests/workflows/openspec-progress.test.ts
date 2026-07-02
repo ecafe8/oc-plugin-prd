@@ -174,12 +174,24 @@ describe("applyOpenSpecSync", () => {
 
 describe("formatSyncResult", () => {
   it("includes no-op message when nothing changed", () => {
-    const output = formatSyncResult({ noOp: true, conflicts: [], updatedTaskIds: [] }, "feat-auth");
+    const output = formatSyncResult(
+      { noOp: true, conflicts: [], updatedTaskIds: [], outcomeKind: "no_op", repairGuidance: [] },
+      "feat-auth",
+    );
     expect(output).toContain("no changes required");
   });
 
   it("lists updated task ids when tasks were synced", () => {
-    const output = formatSyncResult({ noOp: false, conflicts: [], updatedTaskIds: ["AUTH-1", "AUTH-2"] }, "feat-auth");
+    const output = formatSyncResult(
+      {
+        noOp: false,
+        conflicts: [],
+        updatedTaskIds: ["AUTH-1", "AUTH-2"],
+        outcomeKind: "safe_update",
+        repairGuidance: [],
+      },
+      "feat-auth",
+    );
     expect(output).toContain("AUTH-1");
     expect(output).toContain("AUTH-2");
   });

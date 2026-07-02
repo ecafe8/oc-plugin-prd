@@ -4,6 +4,7 @@ export * from "@/workflows/discovery";
 export * from "@/workflows/openspec-sync";
 export * from "@/workflows/planning";
 export * from "@/workflows/progress";
+export * from "@/workflows/recovery";
 export * from "@/workflows/review";
 export * from "@/workflows/review-loop";
 export * from "@/workflows/scaffold";

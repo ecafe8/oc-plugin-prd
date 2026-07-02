@@ -14,8 +14,9 @@
 #   1. Builds the plugin (bun run build)
 #   2. Creates the test directory structure
 #   3. Symlinks the built plugin into .opencode/plugins/
-#   4. Writes minimal .vibe/config.yaml and opencode.json
-#   5. Runs `openspec init` to set up OpenSpec directory structure and OpenCode integration
+#   4. Prompts for model selection (drafting/review)
+#   5. Writes .vibe/config.yaml and opencode.json
+#   6. Runs `openspec init` to set up OpenSpec directory structure and OpenCode integration
 #
 
 set -euo pipefail
@@ -60,21 +61,74 @@ ln -s "$PLUGIN_ROOT/dist/index.js" "$TEST_DIR/.opencode/plugins/index.js"
 echo ""
 
 # ---------------------------------------------------------------------------
-# 4. Write .vibe/config.yaml (minimal, required by the plugin)
+# 4. Interactive model selection
 # ---------------------------------------------------------------------------
-echo "==> Writing .vibe/config.yaml"
-cat > "$TEST_DIR/.vibe/config.yaml" <<'EOF'
-# Minimal workspace config for oc-plugin-prd integration testing.
+echo "==> Model configuration"
+echo ""
+echo "    Available model roles:"
+echo "      - drafting: used for PRD and feature document authoring"
+echo "      - review:   used for structured review critique"
+echo ""
+echo "    Leave blank to use OpenCode default model."
+echo "    You can change models later with the switch_model tool in OpenCode."
+echo ""
+
+DRAFTING_MODEL=""
+REVIEW_MODEL=""
+
+# Check if running interactively
+if [ -t 0 ]; then
+  read -r -p "    Drafting model (e.g. claude-opus-4-5): " DRAFTING_MODEL
+  read -r -p "    Review model (e.g. claude-sonnet-4-5): " REVIEW_MODEL
+else
+  echo "    (non-interactive mode, using default models)"
+fi
+
+# Build config.yaml
+CONFIG_CONTENT="# Workspace config for oc-plugin-prd integration testing.
 #
-# models: {} falls back to the OpenCode default model for all roles.
 # configErrorSeverity: block ensures tools refuse to run if config is absent.
 
-models: {}
+models:"
+
+if [ -n "$DRAFTING_MODEL" ]; then
+  CONFIG_CONTENT="$CONFIG_CONTENT
+  drafting:
+    model: $DRAFTING_MODEL"
+fi
+
+if [ -n "$REVIEW_MODEL" ]; then
+  CONFIG_CONTENT="$CONFIG_CONTENT
+  review:
+    model: $REVIEW_MODEL"
+fi
+
+if [ -z "$DRAFTING_MODEL" ] && [ -z "$REVIEW_MODEL" ]; then
+  CONFIG_CONTENT="$CONFIG_CONTENT {}"
+fi
+
+CONFIG_CONTENT="$CONFIG_CONTENT
 
 workflow:
   autoSyncOpenSpec: true
   configErrorSeverity: block
-EOF
+"
+
+echo ""
+echo "==> Writing .vibe/config.yaml"
+echo "$CONFIG_CONTENT" > "$TEST_DIR/.vibe/config.yaml"
+
+# Show what was written
+if [ -n "$DRAFTING_MODEL" ]; then
+  echo "    drafting: $DRAFTING_MODEL"
+else
+  echo "    drafting: (OpenCode default)"
+fi
+if [ -n "$REVIEW_MODEL" ]; then
+  echo "    review:   $REVIEW_MODEL"
+else
+  echo "    review:   (OpenCode default)"
+fi
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -139,6 +193,10 @@ echo "  opencode"
 echo ""
 echo "To verify plugin loaded, ask OpenCode:"
 echo '  "列出当前可用的所有工具"'
+echo ""
+echo "To switch models during a session:"
+echo '  "把 review 模型切换到 claude-opus-4-5"'
+echo "  (uses the switch_model tool, takes effect immediately)"
 echo ""
 echo "To rebuild after source changes:"
 echo "  cd $PLUGIN_ROOT && bun run build"

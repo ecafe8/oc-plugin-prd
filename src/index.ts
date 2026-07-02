@@ -22,6 +22,7 @@ import {
   projectDiscoverTool,
   reviewLoopContextTool,
   reviewLoopExecuteTool,
+  switchModelTool,
 } from "@/tools";
 
 const prdToolNames = new Set([
@@ -44,6 +45,7 @@ const prdToolNames = new Set([
   "change_request_apply",
   "review_loop_context",
   "review_loop_execute",
+  "switch_model",
 ]);
 
 export const OpenCodePrdPlugin: Plugin = async (ctx) => {
@@ -70,6 +72,7 @@ export const OpenCodePrdPlugin: Plugin = async (ctx) => {
       change_request_apply: changeRequestApplyTool,
       review_loop_context: reviewLoopContextTool,
       review_loop_execute: reviewLoopExecuteTool,
+      switch_model: switchModelTool,
     },
 
     config: async (config) => {

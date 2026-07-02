@@ -3,7 +3,7 @@ import { parse as parseJsonc } from "jsonc-parser";
 
 import { type VibeConfig, vibeConfigSchema } from "@/schemas/config";
 import { USER_CONFIG_FILE, WORKSPACE_CONFIG_PATH } from "@/utils/constants";
-import { readText, readYaml } from "@/utils/fs";
+import { readText, readYaml, writeYaml } from "@/utils/fs";
 import { resolveWorkspacePath } from "@/utils/paths";
 
 const defaultConfig = vibeConfigSchema.parse({});
@@ -51,4 +51,9 @@ export async function loadMergedConfig(root: string): Promise<VibeConfig> {
       ...workspaceConfig.workflow,
     },
   });
+}
+
+export async function writeWorkspaceConfig(root: string, config: Partial<VibeConfig>): Promise<void> {
+  const filePath = resolveWorkspacePath(root, WORKSPACE_CONFIG_PATH);
+  await writeYaml(filePath, config);
 }

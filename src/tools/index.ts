@@ -17,3 +17,4 @@ export * from "@/tools/progress-snapshot";
 export * from "@/tools/project-discover";
 export * from "@/tools/review-loop-context";
 export * from "@/tools/review-loop-execute";
+export * from "@/tools/switch-model";

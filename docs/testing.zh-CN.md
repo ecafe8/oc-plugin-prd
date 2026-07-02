@@ -55,7 +55,7 @@ master_prd_review          master_prd_submit        feature_candidates_generate
 feature_candidates_materialize  feature_split       feature_review
 plan_generate              openspec_sync            openspec_generate
 progress_snapshot          change_request_apply
-review_loop_context        review_loop_execute
+review_loop_context        review_loop_execute      switch_model
 ```
 
 如果未出现以上工具，请检查：
@@ -269,6 +269,32 @@ cat openspec/changes/feat-invoice-tracking.md
   - Feature 统计（总数、已完成、进行中、待处理）
   - Task 统计（总数、已完成、待处理）
   - 活跃的变更请求
+
+---
+
+### 阶段 8 — 模型切换
+
+> 把 review 模型切换到 claude-opus-4-5。
+
+**预期行为：**
+
+- 调用 `switch_model`，`role: "review"`，`model: "claude-opus-4-5"`
+- `.vibe/config.yaml` 已更新
+- 输出显示切换前后的模型名称
+
+**验证：**
+
+```bash
+cat .vibe/config.yaml
+# models.review.model 应为 "claude-opus-4-5"
+```
+
+> 再次切换回 qwen3.7-plus。
+
+**预期行为：**
+
+- `switch_model` 再次更新配置
+- 变更立即对后续工具调用生效
 
 ---
 

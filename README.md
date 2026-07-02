@@ -76,6 +76,24 @@ Optional user-level overrides. Workspace config takes precedence over this file 
 }
 ```
 
+### Switching models at runtime
+
+Models can be changed during a session without restarting OpenCode. The `switch_model` tool updates `.vibe/config.yaml` and takes effect immediately for subsequent tool calls.
+
+```
+switch_model
+  role: "drafting" | "review"
+  model: "claude-opus-4-5"
+```
+
+Example — tell the agent in natural language:
+
+> "Switch the review model to claude-opus-4-5"
+
+The agent calls `switch_model(role: "review", model: "claude-opus-4-5")` and confirms the change. The next `master_prd_draft` or `review_loop_execute` call will use the new model.
+
+You can also edit `.vibe/config.yaml` directly — the change is picked up on the next tool call since the config is read from disk each time.
+
 ---
 
 ## Core concepts

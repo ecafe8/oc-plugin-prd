@@ -57,7 +57,7 @@ master_prd_review          master_prd_submit        feature_candidates_generate
 feature_candidates_materialize  feature_split       feature_review
 plan_generate              openspec_sync            openspec_generate
 progress_snapshot          change_request_apply
-review_loop_context        review_loop_execute
+review_loop_context        review_loop_execute      switch_model
 ```
 
 If none of these appear, check:
@@ -273,6 +273,32 @@ cat openspec/changes/feat-invoice-tracking.md
   - Feature counts (total, done, active, pending)
   - Task counts (total, done, pending)
   - Any active change requests
+
+---
+
+### Phase 8 — Model Switching
+
+> 把 review 模型切换到 claude-opus-4-5。
+
+**Expected:**
+
+- `switch_model` is called with `role: "review"`, `model: "claude-opus-4-5"`
+- `.vibe/config.yaml` is updated
+- Output shows the previous and new model names
+
+**Verify:**
+
+```bash
+cat .vibe/config.yaml
+# models.review.model should be "claude-opus-4-5"
+```
+
+> 再次切换回 qwen3.7-plus。
+
+**Expected:**
+
+- `switch_model` updates the config again
+- Change takes effect immediately for next tool call
 
 ---
 

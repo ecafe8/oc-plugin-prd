@@ -69,7 +69,19 @@ The plugin reads configuration from two sources, merged at runtime. Workspace co
 
 ### Workspace config — `.vibe/config.yaml`
 
-Create this file in your project root before running any PRD workflow tools:
+Create this file in your project root before running any PRD workflow tools.
+
+**Minimal configuration** (uses OpenCode default model for all roles):
+
+```yaml
+models: {}
+
+workflow:
+  autoSyncOpenSpec: true
+  configErrorSeverity: block
+```
+
+**Complete configuration** (specifies models for each role):
 
 ```yaml
 models:
@@ -83,7 +95,7 @@ workflow:
   configErrorSeverity: block     # block or warn when config is missing
 ```
 
-Both `models.drafting` and `models.review` are optional. When absent the plugin falls back to the OpenCode default model.
+Both `models.drafting` and `models.review` are optional. When absent the plugin falls back to the OpenCode default model. You can also switch models at runtime using the `switch_model` tool.
 
 `configErrorSeverity: block` (default) causes all PRD tools to refuse to run when `.vibe/config.yaml` is missing or invalid. Set to `warn` to allow the workflow to proceed with warnings instead.
 

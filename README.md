@@ -1,4 +1,7 @@
-# oc-plugin-prd
+# @oc-plugins/vibe-prd
+
+![npm version](https://img.shields.io/npm/v/@oc-plugins/vibe-prd)
+![license](https://img.shields.io/npm/l/@oc-plugins/vibe-prd)
 
 An [OpenCode](https://opencode.ai) plugin that turns a natural-language product goal into a tracked, reviewable, and implementation-ready feature set.
 
@@ -20,23 +23,43 @@ The plugin drives a structured workflow: **discovery → PRD authoring → featu
 
 ## Installation
 
+Install the plugin via npm or Bun:
+
+```bash
+bun add @oc-plugins/vibe-prd
+# or
+npm install @oc-plugins/vibe-prd
+```
+
 Add the plugin to your OpenCode configuration:
 
 ```jsonc
-// ~/.config/opencode/config.json
+// ~/.config/opencode/opencode.json
 {
-  "plugins": ["path/to/oc-plugin-prd/dist/index.js"]
+  "plugin": ["@oc-plugins/vibe-prd"]
 }
 ```
 
-Build the plugin before first use:
+The plugin requires [Bun](https://bun.sh) v1.3 or later and TypeScript 6.
+
+### Local development
+
+For local development or testing without publishing:
 
 ```bash
+git clone https://github.com/ecafe8/oc-plugin-prd.git
+cd oc-plugin-prd
 bun install
 bun run build
 ```
 
-The plugin requires [Bun](https://bun.sh) v1.3 or later and TypeScript 6.
+Then reference the built file in your OpenCode config:
+
+```jsonc
+{
+  "plugin": ["path/to/oc-plugin-prd/dist/index.js"]
+}
+```
 
 ---
 

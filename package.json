@@ -1,10 +1,17 @@
 {
-  "name": "oc-plugin-prd",
+  "name": "@oc-plugins/vibe-prd",
+  "version": "0.1.0",
+  "description": "OpenCode plugin that turns natural-language product goals into tracked, reviewable, and implementation-ready feature sets through a structured PRD workflow.",
   "module": "dist/index.js",
   "main": "dist/index.js",
   "types": "src/index.ts",
   "type": "module",
-  "private": true,
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun",
     "typecheck": "tsc --noEmit",
@@ -17,6 +24,25 @@
     "check": "biome check . && bun run typecheck && bun test",
     "clean": "rm -rf dist coverage"
   },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "prd",
+    "product-requirements",
+    "feature-decomposition",
+    "workflow",
+    "openspec"
+  ],
+  "author": "ecafe8",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ecafe8/oc-plugin-prd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ecafe8/oc-plugin-prd/issues"
+  },
+  "homepage": "https://github.com/ecafe8/oc-plugin-prd#readme",
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
     "@types/bun": "latest",

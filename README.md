@@ -3,6 +3,8 @@
 ![npm version](https://img.shields.io/npm/v/@oc-plugins/vibe-prd)
 ![license](https://img.shields.io/npm/l/@oc-plugins/vibe-prd)
 
+📖 English | [中文](README.zh-CN.md)
+
 An [OpenCode](https://opencode.ai) plugin that turns a natural-language product goal into a tracked, reviewable, and implementation-ready feature set.
 
 The plugin drives a structured workflow: **discovery → PRD authoring → feature decomposition → review → planning → OpenSpec generation → progress tracking**. At each stage, the plugin writes real files to your workspace and persists workflow state so work can be resumed, inspected, and recovered at any point.
@@ -60,6 +62,31 @@ Then reference the built file in your OpenCode config:
   "plugin": ["path/to/oc-plugin-prd/dist/index.js"]
 }
 ```
+
+### OpenSpec dependency
+
+This plugin requires [OpenSpec](https://github.com/openspecio/openspec) for spec-driven development workflows. OpenSpec is used to generate, track, and synchronize implementation artifacts from approved feature plans.
+
+Install OpenSpec globally:
+
+```bash
+bun install -g openspec
+# or
+npm install -g openspec
+```
+
+Initialize OpenSpec in your project:
+
+```bash
+openspec init --tools opencode
+```
+
+This creates the `openspec/` directory structure and sets up OpenCode integration with skills and commands.
+
+**OpenSpec documentation and resources:**
+
+- Repository: https://github.com/openspecio/openspec
+- Version: Compatible with OpenSpec v1.3.0 or later
 
 ---
 
@@ -571,3 +598,13 @@ tests/
 openspec/
   changes/      OpenSpec change artifacts for this plugin's own development
 ```
+
+---
+
+## Related documentation
+
+- [OpenSpec](https://github.com/openspecio/openspec) — Spec-driven development system
+- [OpenCode](https://opencode.ai) — AI coding agent platform
+- [Testing guide](docs/testing.md) — Integration testing walkthrough
+- [中文文档](README.zh-CN.md) — Chinese version of this README
+

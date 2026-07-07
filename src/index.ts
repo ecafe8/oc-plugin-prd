@@ -4,6 +4,8 @@ import { agents } from "@/agents";
 import { createWorkflowStateHook } from "@/hooks";
 import {
   changeRequestApplyTool,
+  createListModelsTool,
+  createSwitchModelTool,
   discoveryCapturetool,
   discoveryConfirmTool,
   discoveryStatusTool,
@@ -23,7 +25,6 @@ import {
   projectDiscoverTool,
   reviewLoopContextTool,
   reviewLoopExecuteTool,
-  switchModelTool,
 } from "@/tools";
 
 const prdToolNames = new Set([
@@ -52,6 +53,8 @@ const prdToolNames = new Set([
 
 export const OpenCodePrdPlugin: Plugin = async (ctx) => {
   const workflowStateHook = createWorkflowStateHook(ctx);
+  const listModelsTool = createListModelsTool(ctx);
+  const switchModelTool = createSwitchModelTool(ctx);
 
   return {
     tool: {
@@ -68,6 +71,7 @@ export const OpenCodePrdPlugin: Plugin = async (ctx) => {
       feature_candidates_materialize: featureCandidatesMaterializeTool,
       feature_split: featureSplitTool,
       feature_review: featureReviewTool,
+      list_models: listModelsTool,
       plan_generate: planGenerateTool,
       openspec_sync: openSpecSyncTool,
       openspec_generate: openspecGenerateTool,

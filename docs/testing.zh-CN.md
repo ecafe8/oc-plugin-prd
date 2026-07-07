@@ -46,7 +46,7 @@ opencode
 
 > 列出当前可用的所有工具
 
-预期返回应包含以下 20 个工具：
+预期返回应包含以下 21 个工具：
 
 ```
 discovery_capture          discovery_update         discovery_status
@@ -56,6 +56,7 @@ feature_candidates_generate feature_candidates_materialize  feature_split
 feature_review               plan_generate            openspec_sync
 openspec_generate            progress_snapshot        change_request_apply
 review_loop_context          review_loop_execute      switch_model
+list_models
 ```
 
 如果未出现以上工具，请检查：
@@ -290,22 +291,43 @@ cat openspec/changes/feat-invoice-tracking.md
 
 ### 阶段 8 — 模型切换
 
-> 把 review 模型切换到 claude-opus-4-5。
+**步骤 8a — 列出可用模型：**
+
+> 列出当前可用的模型
 
 **预期行为：**
 
-- 调用 `switch_model`，`role: "review"`，`model: "claude-opus-4-5"`
+- 调用 `list_models`
+- 按 provider 分组返回一批 `provider/model` ID
+
+**步骤 8b — 切换到一个有效模型：**
+
+> 把 review 模型切换到 github-copilot/claude-opus-4.5。
+
+**预期行为：**
+
+- 调用 `switch_model`，`role: "review"`，`model: "github-copilot/claude-opus-4.5"`
 - `.vibe/config.yaml` 已更新
-- 输出显示切换前后的模型名称
+- 输出显示切换前后的模型名称，且没有警告（因为该模型存在）
 
 **验证：**
 
 ```bash
 cat .vibe/config.yaml
-# models.review.model 应为 "claude-opus-4-5"
+# models.review.model 应为 "github-copilot/claude-opus-4.5"
 ```
 
-> 再次切换回 qwen3.7-plus。
+**步骤 8c — 切换到一个无效模型名（测试校验警告）：**
+
+> 把 review 模型切换到 gpt-5-4。
+
+**预期行为：**
+
+- `switch_model` 仍然会更新 `.vibe/config.yaml`（不会硬性阻断）
+- 输出中包含 `⚠️  Warning`，提示该模型在当前可用模型列表中未找到
+- 建议运行 `list_models` 查找正确 ID（应该是 `github-copilot/gpt-5.4`）
+
+> 再次切换回 bailian-token-plan/qwen3.7-plus。
 
 **预期行为：**
 

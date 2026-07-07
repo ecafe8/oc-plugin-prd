@@ -113,9 +113,9 @@ workflow:
 ```yaml
 models:
   drafting:
-    model: claude-opus-4-5  # model used for PRD and feature authoring
+    model: github-copilot/claude-opus-4.5  # model used for PRD and feature authoring
   review:
-    model: claude-sonnet-4-5  # model used for structured review critique
+    model: github-copilot/claude-sonnet-4.5  # model used for structured review critique
 
 workflow:
   autoSyncOpenSpec: true         # sync OpenSpec on plan generation
@@ -126,6 +126,38 @@ Both `models.drafting` and `models.review` are optional. When absent the plugin 
 
 `configErrorSeverity: block` (default) causes all PRD tools to refuse to run when `.vibe/config.yaml` is missing or invalid. Set to `warn` to allow the workflow to proceed with warnings instead.
 
+### Verifying model names
+
+Model IDs must be written in `provider/model` format (e.g. `github-copilot/claude-sonnet-5`, `bailian-token-plan/qwen3.7-plus`). A bare model name without the provider prefix (`claude-sonnet-5`) — or a typo such as `gpt-5-4` instead of `gpt-5.4` — is not validated by YAML parsing and will silently produce a wrong or non-existent model reference.
+
+The plugin does not hard-block on an unrecognized model name (provider catalogs can be incomplete or change), but it does help you check:
+
+- **`list_models` tool** — lists all models currently available from your configured OpenCode providers:
+
+  ```
+  list_models
+    provider: "github-copilot"   # optional filter
+  ```
+
+- **`opencode models` CLI command** — the same information from the command line:
+
+  ```bash
+  opencode models
+  opencode models github-copilot
+  ```
+
+- **`switch_model` tool** — validates the model you provide against the live provider list and includes a warning in its output if the model is not found, without blocking the config update:
+
+  ```
+  switch_model
+    role: "review"
+    model: "gpt-5-4"
+  # ⚠️  Warning: "gpt-5-4" was not found among currently available models.
+  #    Run `list_models` to see valid provider/model IDs.
+  ```
+
+Always run `list_models` or `opencode models` once to confirm the exact ID before writing it into `.vibe/config.yaml`.
+
 ### User config — `~/.config/opencode/oc-plugin-prd.jsonc`
 
 Optional user-level overrides. Workspace config takes precedence over this file for any field both define.
@@ -133,7 +165,7 @@ Optional user-level overrides. Workspace config takes precedence over this file 
 ```jsonc
 {
   "models": {
-    "drafting": { "model": "claude-opus-4-5" }
+    "drafting": { "model": "github-copilot/claude-opus-4.5" }
   }
 }
 ```
@@ -145,14 +177,14 @@ Models can be changed during a session without restarting OpenCode. The `switch_
 ```
 switch_model
   role: "drafting" | "review"
-  model: "claude-opus-4-5"
+  model: "github-copilot/claude-opus-4.5"
 ```
 
 Example — tell the agent in natural language:
 
-> "Switch the review model to claude-opus-4-5"
+> "Switch the review model to github-copilot/claude-opus-4.5"
 
-The agent calls `switch_model(role: "review", model: "claude-opus-4-5")` and confirms the change. The next `master_prd_draft` or `review_loop_execute` call will use the new model.
+The agent calls `switch_model(role: "review", model: "github-copilot/claude-opus-4.5")` and confirms the change. The next `master_prd_draft` or `review_loop_execute` call will use the new model.
 
 You can also edit `.vibe/config.yaml` directly — the change is picked up on the next tool call since the config is read from disk each time.
 

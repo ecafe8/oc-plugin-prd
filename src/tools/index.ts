@@ -7,6 +7,7 @@ export * from "@/tools/feature-candidates-generate";
 export * from "@/tools/feature-candidates-materialize";
 export * from "@/tools/feature-review";
 export * from "@/tools/feature-split";
+export * from "@/tools/list-models";
 export * from "@/tools/master-prd-draft";
 export * from "@/tools/master-prd-generate";
 export * from "@/tools/master-prd-review";

@@ -48,7 +48,7 @@ After starting OpenCode, send:
 
 > 列出当前可用的所有工具
 
-Expected: the response should include these 20 tools:
+Expected: the response should include these 21 tools:
 
 ```
 discovery_capture          discovery_update         discovery_status
@@ -58,6 +58,7 @@ feature_candidates_generate feature_candidates_materialize  feature_split
 feature_review               plan_generate            openspec_sync
 openspec_generate            progress_snapshot        change_request_apply
 review_loop_context          review_loop_execute      switch_model
+list_models
 ```
 
 If none of these appear, check:
@@ -294,22 +295,43 @@ cat openspec/changes/feat-invoice-tracking.md
 
 ### Phase 8 — Model Switching
 
-> 把 review 模型切换到 claude-opus-4-5。
+**Step 8a — List available models:**
+
+> 列出当前可用的模型
 
 **Expected:**
 
-- `switch_model` is called with `role: "review"`, `model: "claude-opus-4-5"`
+- `list_models` is called
+- Returns a list of `provider/model` IDs grouped by provider
+
+**Step 8b — Switch to a valid model:**
+
+> 把 review 模型切换到 github-copilot/claude-opus-4.5。
+
+**Expected:**
+
+- `switch_model` is called with `role: "review"`, `model: "github-copilot/claude-opus-4.5"`
 - `.vibe/config.yaml` is updated
-- Output shows the previous and new model names
+- Output shows the previous and new model names, with no warning since the model exists
 
 **Verify:**
 
 ```bash
 cat .vibe/config.yaml
-# models.review.model should be "claude-opus-4-5"
+# models.review.model should be "github-copilot/claude-opus-4.5"
 ```
 
-> 再次切换回 qwen3.7-plus。
+**Step 8c — Switch to an invalid model name (test validation warning):**
+
+> 把 review 模型切换到 gpt-5-4。
+
+**Expected:**
+
+- `switch_model` still updates `.vibe/config.yaml` (does not hard-block)
+- Output includes a `⚠️  Warning` noting the model was not found among available models
+- Suggests running `list_models` to find the correct ID (likely `github-copilot/gpt-5.4`)
+
+> 再次切换回 bailian-token-plan/qwen3.7-plus。
 
 **Expected:**
 

@@ -113,9 +113,9 @@ workflow:
 ```yaml
 models:
   drafting:
-    model: claude-opus-4-5  # 用于 PRD 和功能撰写的模型
+    model: github-copilot/claude-sonnet-5  # 用于 PRD 和功能撰写的模型
   review:
-    model: claude-sonnet-4-5  # 用于结构化审核评论的模型
+    model: github-copilot/gpt-5.4  # 用于结构化审核评论的模型
 
 workflow:
   autoSyncOpenSpec: true         # 在计划生成时同步 OpenSpec
@@ -126,6 +126,38 @@ workflow:
 
 `configErrorSeverity: block`（默认）会导致所有 PRD 工具在 `.vibe/config.yaml` 缺失或无效时拒绝运行。设置为 `warn` 以允许工作流继续进行并显示警告。
 
+### 验证模型名称
+
+模型 ID 必须写成 `provider/model` 格式（例如 `github-copilot/claude-sonnet-5`、`bailian-token-plan/qwen3.7-plus`）。裸模型名（缺少 provider 前缀，如 `claude-sonnet-5`）——或者拼写错误，比如把 `gpt-5.4` 写成 `gpt-5-4`——不会被 YAML 解析校验出来，会悄悄地指向一个错误或不存在的模型。
+
+插件不会因为模型名无法识别就硬性阻断（因为 provider 列表本身可能不完整或会变化），但提供了以下方式帮你检查：
+
+- **`list_models` 工具** — 列出你当前配置的 OpenCode provider 下所有可用模型：
+
+  ```
+  list_models
+    provider: "github-copilot"   # 可选过滤
+  ```
+
+- **`opencode models` CLI 命令** — 命令行下获取同样的信息：
+
+  ```bash
+  opencode models
+  opencode models github-copilot
+  ```
+
+- **`switch_model` 工具** — 会将你提供的模型和当前实际可用的 provider 列表做比对，如果没找到会在输出里给出警告，但不会阻止配置更新：
+
+  ```
+  switch_model
+    role: "review"
+    model: "gpt-5-4"
+  # ⚠️  Warning: "gpt-5-4" was not found among currently available models.
+  #    Run `list_models` to see valid provider/model IDs.
+  ```
+
+在把模型名写入 `.vibe/config.yaml` 之前，务必先运行一次 `list_models` 或 `opencode models` 确认准确的 ID。
+
 ### 用户配置 — `~/.config/opencode/oc-plugin-prd.jsonc`
 
 可选的用户级覆盖。对于两者都定义的任何字段，工作区配置优先于此文件。
@@ -133,7 +165,7 @@ workflow:
 ```jsonc
 {
   "models": {
-    "drafting": { "model": "claude-opus-4-5" }
+    "drafting": { "model": "github-copilot/claude-sonnet-5" }
   }
 }
 ```
@@ -145,14 +177,14 @@ workflow:
 ```
 switch_model
   role: "drafting" | "review"
-  model: "claude-opus-4-5"
+  model: "github-copilot/claude-gpt-5.4"
 ```
 
 示例 — 用自然语言告诉 agent：
 
-> "把审核模型切换到 claude-opus-4-5"
+> "把审核模型切换到 github-copilot/claude-gpt-5.4"
 
-Agent 调用 `switch_model(role: "review", model: "claude-opus-4-5")` 并确认更改。下一次 `master_prd_draft` 或 `review_loop_execute` 调用将使用新模型。
+Agent 调用 `switch_model(role: "review", model: "github-copilot/claude-gpt-5.4")` 并确认更改。下一次 `master_prd_draft` 或 `review_loop_execute` 调用将使用新模型。
 
 你也可以直接编辑 `.vibe/config.yaml` — 由于每次工具调用都会从磁盘读取配置，更改会在下次调用时生效。
 

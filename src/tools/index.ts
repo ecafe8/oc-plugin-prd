@@ -1,5 +1,6 @@
 export * from "@/tools/change-request-apply";
 export * from "@/tools/discovery-capture";
+export * from "@/tools/discovery-confirm";
 export * from "@/tools/discovery-status";
 export * from "@/tools/discovery-update";
 export * from "@/tools/feature-candidates-generate";

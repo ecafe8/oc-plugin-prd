@@ -46,16 +46,16 @@ opencode
 
 > 列出当前可用的所有工具
 
-预期返回应包含以下 19 个工具：
+预期返回应包含以下 20 个工具：
 
 ```
 discovery_capture          discovery_update         discovery_status
-project_discover           master_prd_draft         master_prd_generate
-master_prd_review          master_prd_submit        feature_candidates_generate
-feature_candidates_materialize  feature_split       feature_review
-plan_generate              openspec_sync            openspec_generate
-progress_snapshot          change_request_apply
-review_loop_context        review_loop_execute      switch_model
+discovery_confirm           project_discover         master_prd_draft
+master_prd_generate         master_prd_review        master_prd_submit
+feature_candidates_generate feature_candidates_materialize  feature_split
+feature_review               plan_generate            openspec_sync
+openspec_generate            progress_snapshot        change_request_apply
+review_loop_context          review_loop_execute      switch_model
 ```
 
 如果未出现以上工具，请检查：
@@ -95,6 +95,22 @@ review_loop_context        review_loop_execute      switch_model
 ls .vibe/discovery/
 cat .vibe/discovery/context.yaml
 ```
+
+**步骤 1b — 查看状态并确认：**
+
+> 查看发现状态
+
+**预期行为：**
+
+- `discovery_status` 报告 `Discovery ready: no (pending confirmation)` — 必填字段齐全但尚未确认
+
+> 讨论完成了，确认可以开始起草 PRD
+
+**预期行为：**
+
+- 调用 `discovery_confirm`
+- `.vibe/discovery/context.yaml` 中 `readyForDrafting: true`
+- 后续 `master_prd_draft` 调用不再被阻止
 
 ---
 

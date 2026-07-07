@@ -11,6 +11,7 @@ import { readTracker, writeTracker } from "@/store/tracker";
 import {
   applyAuthoringMeta,
   checkDiscoveryReadiness,
+  computeDraftingReadinessState,
   formatDiscoverySummary,
   mergeDiscoveryContext,
 } from "@/workflows/discovery";
@@ -61,20 +62,26 @@ export const discoveryUpdateTool = tool({
     await writeDiscoveryQuestions(context.directory, questionsText);
 
     const readiness = checkDiscoveryReadiness(merged, questions.length);
+    const state = computeDraftingReadinessState(merged, questions.length);
     const tracker = await readTracker(context.directory);
     const updated = applyAuthoringMeta(tracker, {
-      discoveryReady: readiness.ready,
+      discoveryReady: state === "confirmed",
       lastDiscoveryUpdate: new Date().toISOString(),
       pendingQuestionsCount: questions.length,
     });
     await writeTracker(context.directory, updated);
 
+    const messages: Record<typeof state, string> = {
+      fields_incomplete: `Discovery updated. Still missing: ${readiness.missingFields.join(", ")}.`,
+      pending_confirmation:
+        "Discovery fields look complete. Once the user has reviewed the discovery summary and confirms discussion is done, run `discovery_confirm` before drafting the master PRD.",
+      confirmed: "Discovery is still confirmed ready for drafting. Run `master_prd_draft` to generate the master PRD.",
+    };
+
     return {
       title: "Discovery updated",
-      output: readiness.ready
-        ? `Discovery is now ready for drafting. Run \`master_prd_draft\` to generate the master PRD.`
-        : `Discovery updated. Still missing: ${readiness.missingFields.join(", ")}.`,
-      metadata: { readiness },
+      output: messages[state],
+      metadata: { readiness, state },
     };
   },
 });

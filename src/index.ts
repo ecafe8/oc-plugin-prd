@@ -5,6 +5,7 @@ import { createWorkflowStateHook } from "@/hooks";
 import {
   changeRequestApplyTool,
   discoveryCapturetool,
+  discoveryConfirmTool,
   discoveryStatusTool,
   discoveryUpdateTool,
   featureCandidatesGenerateTool,
@@ -29,6 +30,7 @@ const prdToolNames = new Set([
   "discovery_capture",
   "discovery_update",
   "discovery_status",
+  "discovery_confirm",
   "project_discover",
   "master_prd_draft",
   "master_prd_generate",
@@ -56,6 +58,7 @@ export const OpenCodePrdPlugin: Plugin = async (ctx) => {
       discovery_capture: discoveryCapturetool,
       discovery_update: discoveryUpdateTool,
       discovery_status: discoveryStatusTool,
+      discovery_confirm: discoveryConfirmTool,
       project_discover: projectDiscoverTool,
       master_prd_draft: masterPrdDraftTool,
       master_prd_generate: masterPrdGenerateTool,

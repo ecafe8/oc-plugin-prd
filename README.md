@@ -227,9 +227,9 @@ Work through these phases in order. Each phase produces file artifacts that the 
 
 ### Phase 1 — Discovery
 
-**Goal**: capture enough structured context to draft a coherent PRD.
+**Goal**: capture enough structured context — through as many rounds of discussion as needed — to draft a coherent PRD.
 
-Tools: `discovery_capture`, `discovery_update`, `discovery_status`
+Tools: `discovery_capture`, `discovery_update`, `discovery_status`, `discovery_confirm`
 
 ```
 discovery_capture
@@ -237,11 +237,22 @@ discovery_capture
   writes: .vibe/discovery/context.yaml
           .vibe/discovery/summary.md
 
+discovery_update
+  args: goal?, actors?, constraints?, assumptions?, successMeasures?, resolvedQuestions?, newQuestions?
+  merges new information into existing discovery context — call as many times as needed
+  resets confirmation (see below) whenever core fields change
+
 discovery_status
-  returns: readiness check — missing fields block advancement
+  returns: tri-state readiness — fields incomplete / pending confirmation / confirmed
+
+discovery_confirm
+  requires: required fields already complete
+  effect: explicitly marks discovery confirmed and ready for drafting
 ```
 
-Discovery is ready when `goal`, `actors`, and `successMeasures` are all present. Open questions do not block readiness but are surfaced in the status output.
+Required fields (`goal`, `actors`, `successMeasures`) being present is only half the gate. `master_prd_draft` also requires an explicit `discovery_confirm` call — the harness will not start drafting the moment fields happen to be filled in. This lets discussion span multiple rounds of `discovery_capture`/`discovery_update` before the user consciously confirms discovery is complete.
+
+If discovery content changes after confirmation (via `discovery_update` touching `goal`, `actors`, `constraints`, `assumptions`, or `successMeasures`), confirmation is automatically reset and `discovery_confirm` must be called again. Updates that only touch open questions do not reset confirmation.
 
 ### Phase 2 — Master PRD authoring
 
@@ -377,6 +388,7 @@ The plugin is designed so that selected operations are safe to rerun.
 | `plan_generate` (same steps) | Overwrites `05-plan.md`; produces same task structure |
 | `plan_generate` on `implementation_in_progress` | **Blocked**; returns error message |
 | `discovery_capture` / `discovery_update` | Merges new context with existing; idempotent for same input |
+| `discovery_update` with core field changes | Resets `discovery_confirm` state; requires re-confirmation before drafting |
 
 When `openspec_sync` returns a `no_op` outcome, no further action is needed. This is the expected result when the tracker and OpenSpec already agree on task state.
 
@@ -393,6 +405,16 @@ If `.vibe/config.yaml` is absent and `configErrorSeverity` is `block` (default),
 ```yaml
 models: {}
 ```
+
+### Master PRD drafting is blocked even though discovery fields look complete
+
+`master_prd_draft` and `master_prd_generate` both require required-field completeness AND an explicit `discovery_confirm` call. Run `discovery_status` to check the state:
+
+- `no (fields incomplete)` — fill in the missing fields with `discovery_update`
+- `no (pending confirmation)` — fields are complete; run `discovery_confirm` once the user has reviewed the discovery summary
+- `yes` — confirmed; `master_prd_draft` / `master_prd_generate` will proceed
+
+If discovery content changes after a prior confirmation, confirmation is automatically reset and `discovery_confirm` must be called again. A no-op update — e.g. re-adding an actor that is already recorded — does not reset confirmation.
 
 ### Review was rejected
 
@@ -458,7 +480,19 @@ discovery_capture
   successMeasures: ["Invoice intake tasks are assigned consistently"]
 ```
 
-### 2. Draft and submit the master PRD
+May take multiple `discovery_capture` / `discovery_update` rounds before all required fields are present — see `discovery_status` at any point to check what's still missing.
+
+### 2. Confirm discovery is complete
+
+```
+discovery_status
+  # confirm required fields are present, no missing fields reported
+
+discovery_confirm
+  # marks discovery confirmed ready for drafting
+```
+
+### 3. Draft and submit the master PRD
 
 ```
 master_prd_draft
@@ -472,7 +506,7 @@ master_prd_submit
   # advances to master_prd_review
 ```
 
-### 3. Review and approve the PRD
+### 4. Review and approve the PRD
 
 ```
 master_prd_review
@@ -481,7 +515,7 @@ master_prd_review
   # advances to feature_splitting
 ```
 
-### 4. Generate and confirm feature candidates
+### 5. Generate and confirm feature candidates
 
 ```
 feature_candidates_generate
@@ -499,7 +533,7 @@ feature_candidates_materialize
   #         docs/features/feat-payment-reconciliation/
 ```
 
-### 5. Review features and generate plans
+### 6. Review features and generate plans
 
 ```
 feature_review
@@ -514,7 +548,7 @@ plan_generate
   # writes docs/features/feat-invoice-intake/05-plan.md
 ```
 
-### 6. Generate OpenSpec and sync
+### 7. Generate OpenSpec and sync
 
 ```
 openspec_generate
@@ -527,7 +561,7 @@ openspec_sync
   # applies done status from OpenSpec to tracker
 ```
 
-### 7. Check progress
+### 8. Check progress
 
 ```
 progress_snapshot

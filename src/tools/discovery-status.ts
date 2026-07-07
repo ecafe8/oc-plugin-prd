@@ -2,7 +2,13 @@ import { tool } from "@opencode-ai/plugin";
 
 import { readDiscoveryContext, readDiscoveryQuestions } from "@/store/discovery";
 import { readTracker } from "@/store/tracker";
-import { checkDiscoveryReadiness } from "@/workflows/discovery";
+import { checkDiscoveryReadiness, computeDraftingReadinessState } from "@/workflows/discovery";
+
+const STATE_LABELS = {
+  fields_incomplete: "no (fields incomplete)",
+  pending_confirmation: "no (pending confirmation)",
+  confirmed: "yes",
+} as const;
 
 export const discoveryStatusTool = tool({
   description: "Show current discovery readiness, missing inputs, and open questions.",
@@ -16,14 +22,18 @@ export const discoveryStatusTool = tool({
       .map((line) => line.slice(2));
     const tracker = await readTracker(context.directory);
     const readiness = checkDiscoveryReadiness(ctx, questions.length);
+    const state = computeDraftingReadinessState(ctx, questions.length);
 
-    const lines: string[] = [
-      `Workflow state: ${tracker.workflow.state}`,
-      `Discovery ready: ${readiness.ready ? "yes" : "no"}`,
-    ];
+    const lines: string[] = [`Workflow state: ${tracker.workflow.state}`, `Discovery ready: ${STATE_LABELS[state]}`];
 
-    if (!readiness.ready) {
+    if (state === "fields_incomplete") {
       lines.push(`Missing: ${readiness.missingFields.join(", ")}`);
+    } else if (state === "pending_confirmation") {
+      lines.push(
+        "Fields are complete but discussion has not been explicitly confirmed. Run `discovery_confirm` once the user has reviewed the discovery summary and is ready to proceed.",
+      );
+    } else {
+      lines.push("Confirmed. Run `master_prd_draft` to generate the master PRD.");
     }
 
     if (questions.length > 0) {
@@ -39,7 +49,7 @@ export const discoveryStatusTool = tool({
     return {
       title: "Discovery status",
       output: lines.join("\n"),
-      metadata: { readiness, workflowState: tracker.workflow.state },
+      metadata: { readiness, state, workflowState: tracker.workflow.state },
     };
   },
 });

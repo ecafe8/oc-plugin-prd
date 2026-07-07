@@ -227,9 +227,9 @@ OpenSpec 变更文件是**实施任务进度的权威来源**。它们记录：
 
 ### 阶段 1 — 发现
 
-**目标**：捕获足够的结构化上下文以起草一致的 PRD。
+**目标**：通过多轮讨论捕获足够的结构化上下文，以起草一致的 PRD。
 
-工具：`discovery_capture`、`discovery_update`、`discovery_status`
+工具：`discovery_capture`、`discovery_update`、`discovery_status`、`discovery_confirm`
 
 ```
 discovery_capture
@@ -237,11 +237,22 @@ discovery_capture
   writes: .vibe/discovery/context.yaml
           .vibe/discovery/summary.md
 
+discovery_update
+  args: goal?, actors?, constraints?, assumptions?, successMeasures?, resolvedQuestions?, newQuestions?
+  将新信息合并到现有发现上下文中 — 可根据需要多次调用
+  当核心字段变化时会重置确认状态（见下文）
+
 discovery_status
-  returns: 就绪检查 — 缺失字段阻止推进
+  returns: 三态就绪检查 — 字段不全 / 待确认 / 已确认
+
+discovery_confirm
+  requires: 必填字段已经完整
+  effect: 显式标记发现已确认，可以开始起草
 ```
 
-当 `goal`、`actors` 和 `successMeasures` 都存在时，发现准备就绪。未解决问题不会阻止就绪，但会在状态输出中显示。
+必填字段（`goal`、`actors`、`successMeasures`）齐全只是门禁的一半。`master_prd_draft` 还需要显式调用 `discovery_confirm` — 插件不会在字段刚好填齐的那一刻就开始起草。这样讨论可以横跨多轮 `discovery_capture`/`discovery_update`，直到用户明确确认发现阶段已经完成。
+
+如果确认之后 discovery 内容又发生了变化（通过 `discovery_update` 修改了 `goal`、`actors`、`constraints`、`assumptions` 或 `successMeasures`），确认状态会自动重置，必须重新调用 `discovery_confirm`。只涉及未解决问题的更新不会重置确认状态。
 
 ### 阶段 2 — Master PRD 撰写
 
@@ -377,6 +388,7 @@ progress_snapshot
 | `plan_generate`（相同步骤） | 覆盖 `05-plan.md`；生成相同的任务结构 |
 | `plan_generate` 在 `implementation_in_progress` 上 | **阻止**；返回错误消息 |
 | `discovery_capture` / `discovery_update` | 将新上下文与现有合并；对相同输入幂等 |
+| `discovery_update` 修改核心字段 | 重置 `discovery_confirm` 状态；需要在起草前重新确认 |
 
 当 `openspec_sync` 返回 `no_op` 结果时，无需进一步操作。这是 tracker 和 OpenSpec 在任务状态上已一致时的预期结果。
 
@@ -393,6 +405,16 @@ progress_snapshot
 ```yaml
 models: {}
 ```
+
+### 发现字段看起来齐全，但 Master PRD 起草仍被阻止
+
+`master_prd_draft` 和 `master_prd_generate` 都同时需要**必填字段完整**和**显式调用 `discovery_confirm`**。运行 `discovery_status` 检查当前状态：
+
+- `no (fields incomplete)` — 使用 `discovery_update` 补齐缺失字段
+- `no (pending confirmation)` — 字段已齐全；在用户已经审阅过发现摘要后运行 `discovery_confirm`
+- `yes` — 已确认；`master_prd_draft` / `master_prd_generate` 可以继续
+
+如果在此前确认之后 discovery 内容又发生了变化，确认状态会自动重置，需要再次调用 `discovery_confirm`。像重复添加一个已存在的 actor 这样的无操作更新，不会重置确认状态。
 
 ### 审核被拒绝
 
@@ -458,7 +480,19 @@ discovery_capture
   successMeasures: ["发票收入任务一致分配"]
 ```
 
-### 2. 起草并提交 Master PRD
+可能需要多轮 `discovery_capture` / `discovery_update` 才能补齐所有必填字段 — 随时可以用 `discovery_status` 检查还缺什么。
+
+### 2. 确认发现阶段已完成
+
+```
+discovery_status
+  # 确认必填字段齐全，没有缺失字段报告
+
+discovery_confirm
+  # 标记发现已确认，可以开始起草
+```
+
+### 3. 起草并提交 Master PRD
 
 ```
 master_prd_draft
@@ -472,7 +506,7 @@ master_prd_submit
   # 推进到 master_prd_review
 ```
 
-### 3. 审核并批准 PRD
+### 4. 审核并批准 PRD
 
 ```
 master_prd_review
@@ -481,7 +515,7 @@ master_prd_review
   # 推进到 feature_splitting
 ```
 
-### 4. 生成并确认功能候选
+### 5. 生成并确认功能候选
 
 ```
 feature_candidates_generate
@@ -499,7 +533,7 @@ feature_candidates_materialize
   #       docs/features/feat-payment-reconciliation/
 ```
 
-### 5. 审核功能并生成计划
+### 6. 审核功能并生成计划
 
 ```
 feature_review
@@ -514,7 +548,7 @@ plan_generate
   # 写入 docs/features/feat-invoice-intake/05-plan.md
 ```
 
-### 6. 生成 OpenSpec 并同步
+### 7. 生成 OpenSpec 并同步
 
 ```
 openspec_generate
@@ -527,7 +561,7 @@ openspec_sync
   # 将 OpenSpec 的完成状态应用到 tracker
 ```
 
-### 7. 检查进度
+### 8. 检查进度
 
 ```
 progress_snapshot

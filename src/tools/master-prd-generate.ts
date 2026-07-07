@@ -7,9 +7,18 @@ export const masterPrdGenerateTool = tool({
   description: "Create or refresh the master PRD scaffold for the current workspace.",
   args: {},
   async execute(_args, context) {
+    const tracker = await readTracker(context.directory);
+
+    if (!tracker.authoring.discoveryReady) {
+      return {
+        title: "Discovery not ready",
+        output:
+          "Discovery is not confirmed ready for drafting. Run `discovery_status` to check what's missing, or run `discovery_confirm` once the user has reviewed and confirmed the discovery summary is complete.",
+      };
+    }
+
     await ensureMasterPrd(context.directory);
 
-    const tracker = await readTracker(context.directory);
     tracker.workflow.state = WORKFLOW_STATES.masterPrdDrafting;
     tracker.workflow.updatedAt = new Date().toISOString();
     await writeTracker(context.directory, tracker);

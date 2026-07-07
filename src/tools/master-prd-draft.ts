@@ -23,7 +23,8 @@ export const masterPrdDraftTool = tool({
     if (!tracker.authoring.discoveryReady) {
       return {
         title: "Discovery not ready",
-        output: `Discovery is not marked ready for drafting. Run \`discovery_status\` to see what is missing.`,
+        output:
+          "Discovery is not confirmed ready for drafting. Run `discovery_status` to check what's missing, or run `discovery_confirm` once the user has reviewed and confirmed the discovery summary is complete.",
       };
     }
 

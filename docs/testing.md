@@ -48,16 +48,16 @@ After starting OpenCode, send:
 
 > 列出当前可用的所有工具
 
-Expected: the response should include these 19 tools:
+Expected: the response should include these 20 tools:
 
 ```
 discovery_capture          discovery_update         discovery_status
-project_discover           master_prd_draft         master_prd_generate
-master_prd_review          master_prd_submit        feature_candidates_generate
-feature_candidates_materialize  feature_split       feature_review
-plan_generate              openspec_sync            openspec_generate
-progress_snapshot          change_request_apply
-review_loop_context        review_loop_execute      switch_model
+discovery_confirm           project_discover         master_prd_draft
+master_prd_generate         master_prd_review        master_prd_submit
+feature_candidates_generate feature_candidates_materialize  feature_split
+feature_review               plan_generate            openspec_sync
+openspec_generate            progress_snapshot        change_request_apply
+review_loop_context          review_loop_execute      switch_model
 ```
 
 If none of these appear, check:
@@ -98,6 +98,22 @@ This test uses the **billing workspace** scenario from the README:
 ls .vibe/discovery/
 cat .vibe/discovery/context.yaml
 ```
+
+**Step 1b — Check status and confirm:**
+
+> 查看发现状态
+
+**Expected:**
+
+- `discovery_status` reports `Discovery ready: no (pending confirmation)` — required fields are present but not yet confirmed
+
+> 讨论完成了，确认可以开始起草 PRD
+
+**Expected:**
+
+- `discovery_confirm` is called
+- `.vibe/discovery/context.yaml` — `readyForDrafting: true`
+- Subsequent `master_prd_draft` calls are unblocked
 
 ---
 

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama-lan-149": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "ollama-lan-149",
+      "options": {
+        "baseURL": "http://192.168.1.149:11434/v1"
+      },
+      "models": {
+        "ornith:latest": {
+          "name": "Ornith 9B",
+          "limit": {
+            "context": 262144,
+            "output": 65536
+          }
+        }
+      }
+    },
+    "ollama-lan-148": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "ollama-lan-148",
+      "options": {
+        "baseURL": "http://192.168.1.148:11434/v1"
+      },
+      "models": {
+        "qwen3.5:latest": {
+          "name": "Qwen 3.5 9B",
+          "limit": {
+            "context": 262144,
+            "output": 65536
+          }
+        }
+      }
+    }
+  }
+}

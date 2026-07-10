@@ -37,7 +37,7 @@ Field definitions:
 
 - `workflow.review`: Optional object containing review-loop policy for the workspace.
 - `workflow.review.maxIterations`: Positive integer. Maximum total review iterations for one artifact, including approved and failed iterations. Default: `3`.
-- `workflow.review.escalationAfter`: Positive integer no greater than `maxIterations`. Number of failed review iterations allowed before escalation. Default: `2`.
+- `workflow.review.escalationAfter`: Positive integer no greater than `maxIterations`. Number of failed review iterations allowed before escalation. Default: `3`.
 
 Usage:
 

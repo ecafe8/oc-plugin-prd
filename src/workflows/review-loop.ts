@@ -103,7 +103,11 @@ export function appendIteration(record: ReviewRecord, iteration: ReviewIteration
 // ── Escalation ───────────────────────────────────────────────────────────────
 
 export function checkEscalationNeeded(record: ReviewRecord): boolean {
-  return record.loopState.retryCount >= record.loopState.retryThreshold && !record.loopState.escalated;
+  return record.loopState.retryCount >= record.loopState.escalationAfter && !record.loopState.escalated;
+}
+
+export function isReviewBudgetExhausted(record: ReviewRecord): boolean {
+  return record.history.length >= record.loopState.maxIterations;
 }
 
 export function escalateReview(record: ReviewRecord, reason: string): ReviewRecord {
@@ -145,6 +149,8 @@ export interface ReviewContext {
   previousHistory: ReviewIteration[];
   reviewModel: string | undefined;
   reviewRules: readonly string[];
+  maxIterations: number;
+  escalationAfter: number;
 }
 
 export function assembleReviewContext(
@@ -160,17 +166,30 @@ export function assembleReviewContext(
     previousHistory: record.history,
     reviewModel,
     reviewRules: globalReviewRules,
+    maxIterations: record.loopState.maxIterations,
+    escalationAfter: record.loopState.escalationAfter,
   };
 }
 
 export function formatReviewPrompt(ctx: ReviewContext): string {
-  const { artifactType, artifactContent, preCheckResult, previousHistory, reviewModel, reviewRules } = ctx;
+  const {
+    artifactType,
+    artifactContent,
+    preCheckResult,
+    previousHistory,
+    reviewModel,
+    reviewRules,
+    maxIterations,
+    escalationAfter,
+  } = ctx;
 
   const sections: string[] = [
     `# Review Context: ${artifactType.replace("_", " ").toUpperCase()}`,
     "",
     `**Review model:** ${reviewModel ?? "OpenCode default"}`,
     `**Iteration:** ${previousHistory.length + 1}`,
+    `**Review budget:** ${previousHistory.length} / ${maxIterations} iterations used`,
+    `**Escalation after:** ${escalationAfter} failed iterations`,
     "",
   ];
 
@@ -224,7 +243,8 @@ export function formatReviewSummary(record: ReviewRecord): string {
   const lines: string[] = [
     `Review status: ${record.decision.status}`,
     `Total iterations: ${record.history.length}`,
-    `Retry count: ${record.loopState.retryCount} / ${record.loopState.retryThreshold}`,
+    `Retry count: ${record.loopState.retryCount} / ${record.loopState.escalationAfter}`,
+    `Iteration limit: ${record.history.length} / ${record.loopState.maxIterations}`,
   ];
 
   if (record.loopState.escalated) {

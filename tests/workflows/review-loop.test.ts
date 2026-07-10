@@ -10,6 +10,7 @@ import {
   createReviewIteration,
   escalateReview,
   formatReviewSummary,
+  isReviewBudgetExhausted,
   markContradiction,
   runPreChecks,
 } from "@/workflows/review-loop";
@@ -164,6 +165,32 @@ describe("escalation control", () => {
     expect(checkEscalationNeeded(record)).toBe(true);
   });
 
+  it("uses a custom escalation threshold", () => {
+    const record = reviewRecordSchema.parse({
+      decision: { status: "not_reviewed", updatedAt: new Date().toISOString() },
+      loopState: { retryThreshold: 2, escalationAfter: 2, maxIterations: 5 },
+    });
+    let updated = record;
+    for (let i = 0; i < 2; i++) {
+      const iter = createReviewIteration(updated, REVIEW_STATUSES.changesRequested, "fail", ["b"], [], undefined);
+      updated = appendIteration(updated, iter);
+    }
+    expect(checkEscalationNeeded(updated)).toBe(true);
+  });
+
+  it("detects max iteration exhaustion independently of approval", () => {
+    let record = reviewRecordSchema.parse({
+      decision: { status: "not_reviewed", updatedAt: new Date().toISOString() },
+      loopState: { retryThreshold: 5, escalationAfter: 5, maxIterations: 2 },
+    });
+    for (let i = 0; i < 2; i++) {
+      const iter = createReviewIteration(record, REVIEW_STATUSES.changesRequested, "fail", ["b"], [], undefined);
+      record = appendIteration(record, iter);
+    }
+    expect(isReviewBudgetExhausted(record)).toBe(true);
+    expect(checkEscalationNeeded(record)).toBe(false);
+  });
+
   it("escalateReview marks record as escalated and blocked", () => {
     let record = blankRecord(3);
     for (let i = 0; i < 3; i++) {
@@ -185,6 +212,14 @@ describe("escalation control", () => {
     record = escalateReview(record, "Too many failures");
     const summary = formatReviewSummary(record);
     expect(summary).toContain("Escalated");
+  });
+
+  it("formatReviewSummary includes iteration limit", () => {
+    const record = reviewRecordSchema.parse({
+      decision: { status: "not_reviewed", updatedAt: new Date().toISOString() },
+      loopState: { retryThreshold: 2, escalationAfter: 2, maxIterations: 4 },
+    });
+    expect(formatReviewSummary(record)).toContain("Iteration limit: 0 / 4");
   });
 });
 

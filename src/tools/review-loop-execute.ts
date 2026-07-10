@@ -11,6 +11,7 @@ import {
   createReviewIteration,
   escalateReview,
   formatReviewSummary,
+  isReviewBudgetExhausted,
   markContradiction,
 } from "@/workflows/review-loop";
 
@@ -36,8 +37,25 @@ export const reviewLoopExecuteTool = tool({
     let record = await readReview(context.directory, args.reviewPath).catch(() =>
       reviewRecordSchema.parse({
         decision: { status: "not_reviewed", updatedAt: new Date().toISOString() },
+        loopState: {
+          maxIterations: config.workflow.review.maxIterations,
+          escalationAfter: config.workflow.review.escalationAfter,
+          retryThreshold: config.workflow.review.escalationAfter,
+        },
       }),
     );
+
+    if (record.history.length >= record.loopState.maxIterations) {
+      return {
+        title: "Review iteration limit reached",
+        output: `Review iteration limit reached (${record.loopState.maxIterations}). The artifact requires explicit approval or human intervention before another review can begin.`,
+        metadata: {
+          iteration: record.history.length,
+          maxIterations: record.loopState.maxIterations,
+          status: record.decision.status,
+        },
+      };
+    }
 
     // Handle contradiction first — blocks regardless of approved flag
     if (args.hasContradiction && args.contradictionDetails) {
@@ -69,8 +87,13 @@ export const reviewLoopExecuteTool = tool({
     }
 
     // Check escalation (only on failure)
-    if (!args.approved && checkEscalationNeeded(record)) {
-      record = escalateReview(record, `Exceeded retry threshold (${record.loopState.retryThreshold}) without approval`);
+    if (!args.approved && (checkEscalationNeeded(record) || isReviewBudgetExhausted(record))) {
+      record = escalateReview(
+        record,
+        isReviewBudgetExhausted(record)
+          ? `Exceeded maximum review iterations (${record.loopState.maxIterations}) without approval`
+          : `Exceeded escalation threshold (${record.loopState.escalationAfter}) without approval`,
+      );
     }
 
     await writeReview(context.directory, args.reviewPath, record);

@@ -1,5 +1,5 @@
 import { tool } from "@opencode-ai/plugin";
-import { readReview, readTracker, writeReview, writeReviewIndex, writeTracker } from "@/store";
+import { loadMergedConfig, readReview, readTracker, writeReview, writeReviewIndex, writeTracker } from "@/store";
 import { FEATURE_STATUSES, REVIEW_STATUSES, WORKFLOW_STATES } from "@/utils/constants";
 import { createApprovedReview, createPendingReview } from "@/workflows";
 
@@ -17,7 +17,11 @@ export const featureReviewTool = tool({
       throw new Error(`Unknown feature: ${args.featureId}`);
     }
 
-    const review = args.approved ? createApprovedReview(args.summary) : createPendingReview(args.summary);
+    const config = await loadMergedConfig(context.directory);
+    const limits = config.workflow.review;
+    const review = args.approved
+      ? createApprovedReview(args.summary, limits)
+      : createPendingReview(args.summary, limits);
     await writeReview(context.directory, feature.reviewPath, review);
     await writeReviewIndex(context.directory, feature.id, review);
 

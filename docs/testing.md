@@ -340,6 +340,44 @@ cat .vibe/config.yaml
 
 ---
 
+### Phase 9 — Configurable review iterations
+
+Edit `.vibe/config.yaml`:
+
+```yaml
+workflow:
+  review:
+    maxIterations: 5
+    escalationAfter: 3
+```
+
+**Expected:**
+
+- New review records use `maxIterations: 5` and `escalationAfter: 3`
+- Review summaries show the current iteration limit
+- After three failed iterations, the review escalates; it is not auto-approved
+
+**Verify invalid configuration:**
+
+```yaml
+workflow:
+  review:
+    maxIterations: 2
+    escalationAfter: 3
+```
+
+**Expected:** configuration validation rejects this because `escalationAfter` cannot exceed `maxIterations`.
+
+**Verify persistence:**
+
+1. Start a review with custom limits.
+2. Change workspace limits.
+3. Continue the existing review.
+
+**Expected:** the existing review keeps its original limits; only newly created reviews use the new configuration.
+
+---
+
 ## Edge Case Tests
 
 ### Rejected Review Recovery

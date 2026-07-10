@@ -336,6 +336,44 @@ cat .vibe/config.yaml
 
 ---
 
+### 阶段 9 — 可配置审核迭代
+
+编辑 `.vibe/config.yaml`：
+
+```yaml
+workflow:
+  review:
+    maxIterations: 5
+    escalationAfter: 3
+```
+
+**预期行为：**
+
+- 新建的 review record 使用 `maxIterations: 5` 和 `escalationAfter: 3`
+- 审核摘要显示当前迭代上限
+- 失败三次后审核升级，不会自动批准
+
+**验证无效配置：**
+
+```yaml
+workflow:
+  review:
+    maxIterations: 2
+    escalationAfter: 3
+```
+
+**预期行为：** 配置验证拒绝该配置，因为 `escalationAfter` 不能大于 `maxIterations`。
+
+**验证配置持久化：**
+
+1. 使用自定义限制开始一次审核。
+2. 修改工作区审核限制。
+3. 继续已有审核。
+
+**预期行为：** 已有审核保持原来的限制；只有新建的审核使用新配置。
+
+---
+
 ## 边界场景测试
 
 ### 审核驳回恢复

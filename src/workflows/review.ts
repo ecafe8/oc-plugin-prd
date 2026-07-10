@@ -2,6 +2,16 @@ import { documentReviewRules, globalReviewRules } from "@/prompts/review-rules";
 import type { ReviewRecord } from "@/schemas/review";
 import { REVIEW_STATUSES } from "@/utils/constants";
 
+export interface ReviewLimits {
+  maxIterations: number;
+  escalationAfter: number;
+}
+
+const DEFAULT_REVIEW_LIMITS: ReviewLimits = {
+  maxIterations: 3,
+  escalationAfter: 3,
+};
+
 function createCheckMap(value: "pass" | "warning"): Record<string, "pass" | "warning"> {
   return Object.fromEntries(globalReviewRules.map((key) => [key, value])) as Record<string, "pass" | "warning">;
 }
@@ -13,7 +23,7 @@ function createDocumentCheckMap(value: "pass" | "warning"): Record<string, "pass
   >;
 }
 
-export function createPendingReview(summary: string): ReviewRecord {
+export function createPendingReview(summary: string, limits: ReviewLimits = DEFAULT_REVIEW_LIMITS): ReviewRecord {
   const qualityGates = createCheckMap("warning");
 
   return {
@@ -27,14 +37,16 @@ export function createPendingReview(summary: string): ReviewRecord {
     history: [],
     loopState: {
       retryCount: 0,
-      retryThreshold: 3,
+      retryThreshold: limits.escalationAfter,
+      maxIterations: limits.maxIterations,
+      escalationAfter: limits.escalationAfter,
       escalated: false,
       hasContradiction: false,
     },
   };
 }
 
-export function createApprovedReview(summary: string): ReviewRecord {
+export function createApprovedReview(summary: string, limits: ReviewLimits = DEFAULT_REVIEW_LIMITS): ReviewRecord {
   const qualityGates = createCheckMap("pass");
 
   return {
@@ -48,7 +60,9 @@ export function createApprovedReview(summary: string): ReviewRecord {
     history: [],
     loopState: {
       retryCount: 0,
-      retryThreshold: 3,
+      retryThreshold: limits.escalationAfter,
+      maxIterations: limits.maxIterations,
+      escalationAfter: limits.escalationAfter,
       escalated: false,
       hasContradiction: false,
     },

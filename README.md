@@ -120,6 +120,9 @@ models:
 workflow:
   autoSyncOpenSpec: true         # sync OpenSpec on plan generation
   configErrorSeverity: block     # block or warn when config is missing
+  review:
+    maxIterations: 3             # maximum total review iterations per artifact
+    escalationAfter: 3            # failed iterations before escalation
 ```
 
 Both `models.drafting` and `models.review` are optional. When absent the plugin falls back to the OpenCode default model. You can also switch models at runtime using the `switch_model` tool.
@@ -157,6 +160,32 @@ The plugin does not hard-block on an unrecognized model name (provider catalogs 
   ```
 
 Always run `list_models` or `opencode models` once to confirm the exact ID before writing it into `.vibe/config.yaml`.
+
+### Review iteration configuration
+
+Review-loop limits are configured under `workflow.review`:
+
+| Field | Type | Default | Allowed range | Meaning |
+|-------|------|---------|---------------|---------|
+| `workflow.review.maxIterations` | positive integer | `3` | `>= 1` | Maximum total review iterations for one artifact, including failed and approved iterations |
+| `workflow.review.escalationAfter` | positive integer | `3` | `1..maxIterations` | Number of failed iterations before the review is escalated or blocked |
+
+Usage:
+
+- Omit `workflow.review` to use the defaults.
+- Increase `maxIterations` for complex artifacts that need more revision cycles.
+- Lower `escalationAfter` when repeated failures should reach a human quickly.
+- A limit exhaustion never auto-approves an artifact; approval remains explicit.
+- Effective limits are copied into a new review record and remain stable if workspace configuration changes later.
+
+Example:
+
+```yaml
+workflow:
+  review:
+    maxIterations: 5
+    escalationAfter: 3
+```
 
 ### User config — `~/.config/opencode/oc-plugin-prd.jsonc`
 
@@ -673,4 +702,3 @@ openspec/
 - [OpenCode](https://opencode.ai) — AI coding agent platform
 - [Testing guide](docs/testing.md) — Integration testing walkthrough
 - [中文文档](README.zh-CN.md) — Chinese version of this README
-

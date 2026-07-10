@@ -120,6 +120,9 @@ models:
 workflow:
   autoSyncOpenSpec: true         # 在计划生成时同步 OpenSpec
   configErrorSeverity: block     # 配置缺失时阻止或警告
+  review:
+    maxIterations: 3             # 每个制品允许的最大审核迭代次数
+    escalationAfter: 3            # 失败多少次后升级
 ```
 
 `models.drafting` 和 `models.review` 都是可选的。当缺失时，插件会回退到 OpenCode 默认模型。你也可以使用 `switch_model` 工具在运行时切换模型。
@@ -157,6 +160,32 @@ workflow:
   ```
 
 在把模型名写入 `.vibe/config.yaml` 之前，务必先运行一次 `list_models` 或 `opencode models` 确认准确的 ID。
+
+### 审核迭代配置
+
+审核循环限制配置在 `workflow.review` 下：
+
+| 字段 | 类型 | 默认值 | 允许范围 | 含义 |
+|------|------|--------|----------|------|
+| `workflow.review.maxIterations` | 正整数 | `3` | `>= 1` | 一个制品允许的最大审核迭代次数，包括失败和通过的迭代 |
+| `workflow.review.escalationAfter` | 正整数 | `3` | `1..maxIterations` | 失败多少次后升级或阻塞审核 |
+
+使用方式：
+
+- 省略 `workflow.review` 时使用默认值。
+- 复杂制品需要更多修改轮次时，提高 `maxIterations`。
+- 希望多次失败后尽快交给人工处理时，降低 `escalationAfter`。
+- 达到限制不会自动批准制品，批准仍然必须显式发生。
+- 有效限制会复制到新建的 review record 中，之后工作区配置变化也不会改变已有审核的预算。
+
+示例：
+
+```yaml
+workflow:
+  review:
+    maxIterations: 5
+    escalationAfter: 3
+```
 
 ### 用户配置 — `~/.config/opencode/oc-plugin-prd.jsonc`
 

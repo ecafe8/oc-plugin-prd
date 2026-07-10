@@ -1,6 +1,6 @@
 import { tool } from "@opencode-ai/plugin";
 
-import { readTracker, writeReviewIndex, writeTracker } from "@/store";
+import { loadMergedConfig, readTracker, writeReviewIndex, writeTracker } from "@/store";
 import { REVIEW_STATUSES, WORKFLOW_STATES } from "@/utils/constants";
 import { createApprovedReview, createPendingReview } from "@/workflows";
 
@@ -11,7 +11,11 @@ export const masterPrdReviewTool = tool({
     summary: tool.schema.string().default(""),
   },
   async execute(args, context) {
-    const review = args.approved ? createApprovedReview(args.summary) : createPendingReview(args.summary);
+    const config = await loadMergedConfig(context.directory);
+    const limits = config.workflow.review;
+    const review = args.approved
+      ? createApprovedReview(args.summary, limits)
+      : createPendingReview(args.summary, limits);
     await writeReviewIndex(context.directory, "master-prd", review);
 
     const tracker = await readTracker(context.directory);

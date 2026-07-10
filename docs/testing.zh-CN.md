@@ -498,6 +498,20 @@ opencode
 rm -rf /tmp/prd-test
 ```
 
+如果只想重置测试产物，同时保留 OpenCode/provider 配置、插件 symlink、OpenSpec commands/skills 和 `.vibe/config.yaml`，使用：
+
+```bash
+./scripts/clean-test-workspace.sh /path/to/test-workspace
+```
+
+默认测试工作区示例：
+
+```bash
+./scripts/clean-test-workspace.sh /tmp/prd-test
+```
+
+清理完成后请重启 OpenCode，再开始新的工作流测试。
+
 ---
 
 ## 运行单元测试

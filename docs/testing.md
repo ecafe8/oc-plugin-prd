@@ -502,6 +502,21 @@ opencode
 rm -rf /tmp/prd-test
 ```
 
+To reset a test workspace while preserving its OpenCode/provider configuration,
+plugin symlink, OpenSpec commands/skills, and `.vibe/config.yaml`:
+
+```bash
+./scripts/clean-test-workspace.sh /path/to/test-workspace
+```
+
+For the current default workspace:
+
+```bash
+./scripts/clean-test-workspace.sh /tmp/prd-test
+```
+
+Restart OpenCode after cleaning before starting a new workflow.
+
 ---
 
 ## Running Unit Tests
